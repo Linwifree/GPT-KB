@@ -1,0 +1,797 @@
+knowledge_graph:
+  id: "site-template-existing-architecture-knowledge-graph"
+  purpose: "让 GPT 理解当前商业网站底座模板项目的已有架构背景、模块边界、依赖方向与知识源关系。"
+  scope: "仅包含当前已有的 architecture 顶层规则文稿与 modules 文稿。"
+  source_basis:
+    included_sources:
+      - path: "docs/architecture/00-overview.md"
+        role: "项目总览、三层架构、主要区域、依赖方向、核心风险"
+      - path: "docs/architecture/01-global-rules.md"
+        role: "全局架构规则、模块分类规则、依赖方向规则、边界表达规则"
+      - path: "docs/architecture/02-testing-strategy.md"
+        role: "测试策略、Spec 阶段验证、实现阶段验证、回归策略"
+      - path: "docs/architecture/03-glossary.md"
+        role: "项目术语定义、概念区分、命名偏好"
+      - path: "docs/architecture/modules/auth-role-permission.md"
+        role: "Auth / Role / Permission foundation 模块架构"
+      - path: "docs/architecture/modules/dashboard.md"
+        role: "Dashboard 模块架构"
+      - path: "docs/architecture/modules/admin.md"
+        role: "Admin 模块架构"
+      - path: "docs/architecture/modules/marketing.md"
+        role: "Marketing 模块架构"
+      - path: "docs/architecture/modules/extension-slot.md"
+        role: "Extension Slot 接入原则架构"
+
+    excluded_sources:
+      - path: ".kiro/"
+        reason: "不进入当前 GPT 项目背景知识图谱。"
+      - path: "docs/architecture/workflow/"
+        reason: "workflow 属于旧/后续流程层，不进入当前项目背景知识图谱。"
+      - path: "docs/architecture/phases/"
+        reason: "phases 属于旧/后续阶段规划层，不进入当前项目背景知识图谱。"
+      - path: "docs/architecture/04-engineering-node-extraction-and-flow-preparation.md"
+        reason: "该文件服务于工程节点提炼、workflow、流程图准备；当前知识图谱只保留已有项目背景与模块关系。"
+
+  nodes:
+    project:
+      id: "commercial_site_template"
+      type: "project"
+      name: "商业网站底座模板"
+      description: "面向外包客户交付的可复用商业网站基础模板，支持标准化网站能力、客户差异化定制、未来扩展模块接入与 AI 辅助生产维护。"
+      source:
+        - "docs/architecture/00-overview.md"
+
+    layers:
+      stable_core:
+        id: "stable_core"
+        type: "architecture_layer"
+        description: "模板复用基础，跨客户保持稳定，不应被客户差异化内容或扩展模块反向污染。"
+        contains:
+          - "auth_role_permission"
+          - "dashboard_shell"
+          - "admin_shell"
+          - "database_access_patterns"
+          - "deployment_baseline"
+          - "shared_validation_rules"
+          - "shared_conventions"
+          - "extension_slot_rules"
+        source:
+          - "docs/architecture/00-overview.md"
+          - "docs/architecture/01-global-rules.md"
+          - "docs/architecture/03-glossary.md"
+
+      variable_layer:
+        id: "variable_layer"
+        type: "architecture_layer"
+        description: "按客户需求高频变化，可替换、可调整，但不应反向破坏 Stable Core。"
+        contains:
+          - "branding"
+          - "design_language"
+          - "marketing_content"
+          - "landing_composition"
+          - "dashboard_business_content"
+          - "admin_business_content"
+          - "customer_specific_business_content"
+        source:
+          - "docs/architecture/00-overview.md"
+          - "docs/architecture/01-global-rules.md"
+          - "docs/architecture/03-glossary.md"
+
+      extension_layer:
+        id: "extension_layer"
+        type: "architecture_layer"
+        description: "可独立添加或移除的客户特定扩展能力，不强制所有客户使用，不应修改 Stable Core。"
+        contains:
+          - "tool_pages"
+          - "custom_business_modules"
+          - "feature_specific_workflows"
+          - "add_on_integrations"
+        source:
+          - "docs/architecture/00-overview.md"
+          - "docs/architecture/01-global-rules.md"
+          - "docs/architecture/03-glossary.md"
+
+    upper_rules:
+      architecture_overview:
+        id: "architecture_overview"
+        type: "upper_rule_source"
+        path: "docs/architecture/00-overview.md"
+        description: "项目总览，定义目标、范围、三层架构、主要区域、依赖方向、架构原则与风险。"
+
+      global_rules:
+        id: "global_rules"
+        type: "upper_rule_source"
+        path: "docs/architecture/01-global-rules.md"
+        description: "全局架构规则，定义三层判断、模块分类、依赖方向、边界控制与文档表达规则。"
+
+      testing_strategy:
+        id: "testing_strategy"
+        type: "validation_rule_source"
+        path: "docs/architecture/02-testing-strategy.md"
+        description: "测试策略，定义架构文稿阶段、Spec 阶段、实现阶段与回归阶段的验证口径。"
+
+      architecture_glossary:
+        id: "architecture_glossary"
+        type: "terminology_source"
+        path: "docs/architecture/03-glossary.md"
+        description: "术语表，固定项目内 Stable Core、Variable Layer、Extension Layer、Foundation、Shell、Business Content、Extension Slot 等概念含义。"
+
+    modules:
+      auth_role_permission:
+        id: "auth_role_permission"
+        type: "module"
+        module_class: "foundation"
+        layer: "stable_core"
+        path: "docs/architecture/modules/auth-role-permission.md"
+        description: "认证、角色、权限 foundation，提供用户认证、session、角色检查、权限检查和守卫能力。"
+        responsibilities:
+          - "用户身份认证"
+          - "Session 生命周期管理"
+          - "角色模型与角色检查"
+          - "权限检查规则"
+          - "Dashboard / Admin 守卫能力"
+          - "角色与权限扩展点"
+        non_responsibilities:
+          - "具体业务逻辑"
+          - "具体业务角色定义"
+          - "业务资源访问策略"
+          - "Dashboard / Admin / Marketing 业务能力"
+        source:
+          - "docs/architecture/modules/auth-role-permission.md"
+
+      dashboard:
+        id: "dashboard"
+        type: "area"
+        path: "docs/architecture/modules/dashboard.md"
+        description: "已登录用户工作空间，包含稳定 dashboard shell 与可变 dashboard business content。"
+        contains:
+          - "dashboard_shell"
+          - "dashboard_business_content"
+        source:
+          - "docs/architecture/modules/dashboard.md"
+
+      dashboard_shell:
+        id: "dashboard_shell"
+        type: "submodule"
+        parent: "dashboard"
+        module_class: "shell"
+        layer: "stable_core"
+        description: "提供 dashboard 路由外壳、布局框架、导航结构、守卫机制和扩展接入点。"
+        responsibilities:
+          - "路由外壳"
+          - "布局框架"
+          - "导航结构"
+          - "Auth / Role / Permission 守卫"
+          - "扩展模块接入点"
+          - "统一错误处理与加载状态"
+
+      dashboard_business_content:
+        id: "dashboard_business_content"
+        type: "submodule"
+        parent: "dashboard"
+        module_class: "business_content"
+        layer: "variable_layer_or_extension_layer"
+        description: "用户相关业务功能、用户数据展示与操作、用户侧业务流程。"
+        responsibilities:
+          - "用户相关业务功能"
+          - "用户数据展示"
+          - "用户数据操作"
+          - "用户侧业务流程"
+        non_responsibilities:
+          - "路由守卫"
+          - "布局框架"
+          - "认证与权限 foundation"
+          - "管理员专属功能"
+
+      admin:
+        id: "admin"
+        type: "area"
+        path: "docs/architecture/modules/admin.md"
+        description: "网站拥有者 / 管理员使用的管理后台，包含稳定 admin shell 与可变 admin business content。"
+        contains:
+          - "admin_shell"
+          - "admin_business_content"
+        source:
+          - "docs/architecture/modules/admin.md"
+
+      admin_shell:
+        id: "admin_shell"
+        type: "submodule"
+        parent: "admin"
+        module_class: "shell"
+        layer: "stable_core"
+        description: "提供 admin 路由外壳、布局框架、导航结构、admin role 守卫和管理类扩展接入点。"
+        responsibilities:
+          - "Admin 路由外壳"
+          - "Admin 布局框架"
+          - "Admin 导航结构"
+          - "Admin role 守卫"
+          - "管理类扩展接入点"
+          - "统一错误处理与加载状态"
+
+      admin_business_content:
+        id: "admin_business_content"
+        type: "submodule"
+        parent: "admin"
+        module_class: "business_content"
+        layer: "variable_layer_or_extension_layer"
+        description: "管理后台中的具体管理能力，包括用户、角色、权限、业务数据、系统配置、监控与审计。"
+        responsibilities:
+          - "用户管理"
+          - "角色管理"
+          - "权限管理"
+          - "业务数据管理"
+          - "系统配置管理"
+          - "监控与审计"
+        non_responsibilities:
+          - "普通用户业务功能"
+          - "公开营销内容"
+          - "认证与权限底层实现"
+
+      marketing:
+        id: "marketing"
+        type: "area"
+        path: "docs/architecture/modules/marketing.md"
+        description: "公开访问的营销页面区域，包含稳定页面结构与可变营销内容。"
+        contains:
+          - "marketing_page_structure"
+          - "marketing_content"
+        source:
+          - "docs/architecture/modules/marketing.md"
+
+      marketing_page_structure:
+        id: "marketing_page_structure"
+        type: "submodule"
+        parent: "marketing"
+        module_class: "public_surface_structure"
+        layer: "stable_core"
+        description: "营销页面的公开路由、布局、导航与转化入口结构。"
+        responsibilities:
+          - "首页、产品介绍、定价、关于等公开路由"
+          - "页头、页脚、内容区布局"
+          - "公开导航结构"
+          - "注册 / 登录转化入口"
+
+      marketing_content:
+        id: "marketing_content"
+        type: "submodule"
+        parent: "marketing"
+        module_class: "content_layer"
+        layer: "variable_layer"
+        description: "营销文案、品牌元素、图片视频、产品介绍、定价说明等客户可变内容。"
+        responsibilities:
+          - "营销文案"
+          - "品牌元素"
+          - "图片与视频"
+          - "产品介绍"
+          - "功能展示"
+          - "定价说明"
+        non_responsibilities:
+          - "核心业务逻辑"
+          - "用户私有数据访问"
+          - "登录后业务功能"
+          - "管理员管理功能"
+
+      extension_slot:
+        id: "extension_slot"
+        type: "policy_module"
+        module_class: "extension_policy"
+        layer: "stable_core_rule"
+        path: "docs/architecture/modules/extension-slot.md"
+        description: "横向扩展接入规则，不是独立业务区域；定义扩展模块如何接入 dashboard / admin。"
+        responsibilities:
+          - "扩展模块接入 dashboard 的原则"
+          - "扩展模块接入 admin 的原则"
+          - "扩展模块与 Stable Core 的依赖约束"
+          - "扩展模块之间的隔离原则"
+          - "扩展模块典型场景与边界"
+        non_responsibilities:
+          - "具体扩展模块实现"
+          - "具体扩展注册机制"
+          - "重型插件系统"
+          - "marketplace"
+          - "热插拔机制"
+        source:
+          - "docs/architecture/modules/extension-slot.md"
+
+      extension_module:
+        id: "extension_module"
+        type: "module_archetype"
+        module_class: "extension_module"
+        layer: "extension_layer"
+        description: "客户特定扩展模块，可接入 dashboard 或 admin，可独立添加或移除，不应修改 Stable Core。"
+        examples:
+          - "Tool pages"
+          - "Custom business modules"
+          - "Feature-specific workflows"
+          - "Add-on integrations"
+
+    shared_concepts:
+      database_access_patterns:
+        id: "database_access_patterns"
+        type: "shared_foundation_concept"
+        module_class: "foundation"
+        layer: "stable_core"
+        description: "数据库访问基础规则与连接管理，是多个模块的数据访问基础。"
+        source:
+          - "docs/architecture/00-overview.md"
+
+      deployment_baseline:
+        id: "deployment_baseline"
+        type: "shared_infrastructure_concept"
+        layer: "stable_core"
+        description: "Docker Compose + Caddy 部署基线配置。"
+        source:
+          - "docs/architecture/00-overview.md"
+
+      shared_validation_rules:
+        id: "shared_validation_rules"
+        type: "policy_convention"
+        layer: "stable_core"
+        description: "跨模块共享的验证逻辑。"
+        source:
+          - "docs/architecture/00-overview.md"
+          - "docs/architecture/02-testing-strategy.md"
+
+      shared_conventions:
+        id: "shared_conventions"
+        type: "policy_convention"
+        layer: "stable_core"
+        description: "代码组织、命名、错误处理等跨模块共享约定。"
+        source:
+          - "docs/architecture/00-overview.md"
+          - "docs/architecture/01-global-rules.md"
+
+  edges:
+    layer_membership:
+      - from: "auth_role_permission"
+        to: "stable_core"
+        relation: "belongs_to"
+      - from: "dashboard_shell"
+        to: "stable_core"
+        relation: "belongs_to"
+      - from: "admin_shell"
+        to: "stable_core"
+        relation: "belongs_to"
+      - from: "marketing_page_structure"
+        to: "stable_core"
+        relation: "belongs_to"
+      - from: "database_access_patterns"
+        to: "stable_core"
+        relation: "belongs_to"
+      - from: "deployment_baseline"
+        to: "stable_core"
+        relation: "belongs_to"
+      - from: "shared_validation_rules"
+        to: "stable_core"
+        relation: "belongs_to"
+      - from: "shared_conventions"
+        to: "stable_core"
+        relation: "belongs_to"
+      - from: "extension_slot"
+        to: "stable_core"
+        relation: "belongs_to_as_rule"
+      - from: "marketing_content"
+        to: "variable_layer"
+        relation: "belongs_to"
+      - from: "dashboard_business_content"
+        to: "variable_layer"
+        relation: "may_belong_to"
+      - from: "admin_business_content"
+        to: "variable_layer"
+        relation: "may_belong_to"
+      - from: "extension_module"
+        to: "extension_layer"
+        relation: "belongs_to"
+
+    allowed_dependencies:
+      - from: "dashboard"
+        to: "auth_role_permission"
+        relation: "depends_on"
+        strength: "strong"
+        reason: "Dashboard 必须依赖 auth 守卫、role 检查和 permission 检查。"
+
+      - from: "admin"
+        to: "auth_role_permission"
+        relation: "depends_on"
+        strength: "strong"
+        reason: "Admin 必须依赖 auth 守卫、admin role 检查和 permission 检查。"
+
+      - from: "marketing"
+        to: "auth_role_permission"
+        relation: "light_depends_on"
+        strength: "weak"
+        reason: "Marketing 可查询登录状态、显示登录/已登录提示、提供登录注册入口。"
+
+      - from: "auth_role_permission"
+        to: "database_access_patterns"
+        relation: "may_depend_on"
+        strength: "medium"
+        reason: "Auth / Role / Permission 可依赖用户表、角色表等数据库访问基础规则。"
+
+      - from: "dashboard"
+        to: "database_access_patterns"
+        relation: "depends_on"
+        strength: "medium"
+        reason: "Dashboard 需要访问当前用户有权限的数据。"
+
+      - from: "admin"
+        to: "database_access_patterns"
+        relation: "depends_on"
+        strength: "medium"
+        reason: "Admin 在授权管理场景下可访问全局范围数据。"
+
+      - from: "dashboard"
+        to: "shared_validation_rules"
+        relation: "may_depend_on"
+        strength: "medium"
+
+      - from: "admin"
+        to: "shared_validation_rules"
+        relation: "may_depend_on"
+        strength: "medium"
+
+      - from: "marketing"
+        to: "shared_validation_rules"
+        relation: "may_depend_on"
+        strength: "weak"
+
+      - from: "dashboard"
+        to: "shared_conventions"
+        relation: "may_depend_on"
+        strength: "medium"
+
+      - from: "admin"
+        to: "shared_conventions"
+        relation: "may_depend_on"
+        strength: "medium"
+
+      - from: "marketing"
+        to: "shared_conventions"
+        relation: "may_depend_on"
+        strength: "medium"
+
+      - from: "extension_module"
+        to: "dashboard"
+        relation: "may_attach_to"
+        strength: "allowed"
+        reason: "用户侧扩展模块可接入 dashboard 提供的扩展点。"
+
+      - from: "extension_module"
+        to: "admin"
+        relation: "may_attach_to"
+        strength: "allowed"
+        reason: "管理类扩展模块可接入 admin 提供的扩展点。"
+
+      - from: "extension_module"
+        to: "auth_role_permission"
+        relation: "may_depend_on"
+        strength: "allowed"
+        reason: "扩展模块可依赖 auth / role / permission 进行守卫与权限检查。"
+
+      - from: "extension_module"
+        to: "database_access_patterns"
+        relation: "may_depend_on"
+        strength: "allowed"
+        reason: "扩展模块可访问数据库，但必须遵守 database access patterns。"
+
+      - from: "extension_module"
+        to: "shared_conventions"
+        relation: "may_depend_on"
+        strength: "allowed"
+
+    forbidden_dependencies:
+      - from: "stable_core"
+        to: "variable_layer"
+        relation: "must_not_depend_on"
+        reason: "Stable Core 不应依赖 Variable Layer。"
+
+      - from: "stable_core"
+        to: "extension_layer"
+        relation: "must_not_depend_on"
+        reason: "Stable Core 不应依赖 Extension Layer。"
+
+      - from: "auth_role_permission"
+        to: "marketing"
+        relation: "must_not_depend_on"
+        reason: "Auth foundation 不应依赖 marketing。"
+
+      - from: "auth_role_permission"
+        to: "dashboard"
+        relation: "must_not_depend_on"
+        reason: "Auth foundation 不应依赖 dashboard。"
+
+      - from: "auth_role_permission"
+        to: "admin"
+        relation: "must_not_depend_on"
+        reason: "Auth foundation 不应依赖 admin。"
+
+      - from: "auth_role_permission"
+        to: "extension_module"
+        relation: "must_not_depend_on"
+        reason: "Auth foundation 不应依赖任何扩展模块。"
+
+      - from: "dashboard"
+        to: "admin"
+        relation: "must_not_depend_on"
+        reason: "Dashboard 与 Admin 不应相互依赖业务逻辑。"
+
+      - from: "admin"
+        to: "dashboard"
+        relation: "must_not_depend_on"
+        reason: "Admin 与 Dashboard 不应相互依赖业务逻辑。"
+
+      - from: "marketing"
+        to: "dashboard"
+        relation: "must_not_depend_on"
+        reason: "Marketing 不应依赖 dashboard 的业务逻辑。"
+
+      - from: "marketing"
+        to: "admin"
+        relation: "must_not_depend_on"
+        reason: "Marketing 不应依赖 admin 的业务逻辑。"
+
+      - from: "dashboard"
+        to: "marketing"
+        relation: "must_not_depend_on"
+        reason: "Dashboard 不应依赖 marketing。"
+
+      - from: "admin"
+        to: "marketing"
+        relation: "must_not_depend_on"
+        reason: "Admin 不应依赖 marketing。"
+
+      - from: "dashboard"
+        to: "extension_module"
+        relation: "must_not_depend_on"
+        reason: "Dashboard 不应依赖具体扩展模块。"
+
+      - from: "admin"
+        to: "extension_module"
+        relation: "must_not_depend_on"
+        reason: "Admin 不应依赖具体扩展模块。"
+
+      - from: "extension_module"
+        to: "extension_module"
+        relation: "should_not_depend_on_by_default"
+        reason: "扩展模块之间默认不相互依赖。"
+
+      - from: "extension_module"
+        to: "stable_core"
+        relation: "must_not_modify"
+        reason: "扩展模块不应反向修改 Stable Core。"
+
+      - from: "extension_module"
+        to: "dashboard_internal_implementation"
+        relation: "must_not_depend_on"
+        reason: "扩展模块不应依赖 dashboard 内部实现细节。"
+
+      - from: "extension_module"
+        to: "admin_internal_implementation"
+        relation: "must_not_depend_on"
+        reason: "扩展模块不应依赖 admin 内部实现细节。"
+
+    area_relationships:
+      - from: "marketing"
+        to: "dashboard"
+        relation: "may_link_to"
+        reason: "Marketing 可提供入口引导用户进入 dashboard。"
+
+      - from: "marketing"
+        to: "auth_role_permission"
+        relation: "may_show_auth_state"
+        reason: "Marketing 可显示登录状态、登录按钮或进入工作台按钮。"
+
+      - from: "admin"
+        to: "marketing_content"
+        relation: "may_manage_as_business_content"
+        reason: "Admin 可能需要管理 marketing 内容，但这是 admin 的管理能力，不是 marketing 依赖 admin。"
+
+      - from: "admin"
+        to: "dashboard_related_business_data"
+        relation: "may_manage_as_business_content"
+        reason: "Admin 可能管理 dashboard 相关业务数据，但不是 admin 依赖 dashboard。"
+
+      - from: "dashboard"
+        to: "admin"
+        relation: "must_keep_responsibility_separated"
+        reason: "Dashboard 承载普通用户工作空间，Admin 承载管理后台。"
+
+      - from: "marketing"
+        to: "dashboard"
+        relation: "must_keep_public_vs_authenticated_boundary"
+        reason: "Marketing 承载公开内容，Dashboard 承载登录后用户业务。"
+
+    source_document_relationships:
+      - from: "architecture_overview"
+        to: "stable_core"
+        relation: "defines"
+      - from: "architecture_overview"
+        to: "variable_layer"
+        relation: "defines"
+      - from: "architecture_overview"
+        to: "extension_layer"
+        relation: "defines"
+      - from: "architecture_overview"
+        to: "marketing"
+        relation: "summarizes"
+      - from: "architecture_overview"
+        to: "dashboard"
+        relation: "summarizes"
+      - from: "architecture_overview"
+        to: "admin"
+        relation: "summarizes"
+      - from: "architecture_overview"
+        to: "auth_role_permission"
+        relation: "summarizes"
+
+      - from: "global_rules"
+        to: "stable_core"
+        relation: "constrains"
+      - from: "global_rules"
+        to: "variable_layer"
+        relation: "constrains"
+      - from: "global_rules"
+        to: "extension_layer"
+        relation: "constrains"
+      - from: "global_rules"
+        to: "auth_role_permission"
+        relation: "constrains"
+      - from: "global_rules"
+        to: "dashboard"
+        relation: "constrains"
+      - from: "global_rules"
+        to: "admin"
+        relation: "constrains"
+      - from: "global_rules"
+        to: "marketing"
+        relation: "constrains"
+      - from: "global_rules"
+        to: "extension_slot"
+        relation: "constrains"
+
+      - from: "architecture_glossary"
+        to: "stable_core"
+        relation: "defines_terms_for"
+      - from: "architecture_glossary"
+        to: "variable_layer"
+        relation: "defines_terms_for"
+      - from: "architecture_glossary"
+        to: "extension_layer"
+        relation: "defines_terms_for"
+      - from: "architecture_glossary"
+        to: "auth_role_permission"
+        relation: "defines_terms_for"
+      - from: "architecture_glossary"
+        to: "dashboard"
+        relation: "defines_terms_for"
+      - from: "architecture_glossary"
+        to: "admin"
+        relation: "defines_terms_for"
+      - from: "architecture_glossary"
+        to: "marketing"
+        relation: "defines_terms_for"
+      - from: "architecture_glossary"
+        to: "extension_slot"
+        relation: "defines_terms_for"
+
+      - from: "testing_strategy"
+        to: "stable_core"
+        relation: "validates"
+      - from: "testing_strategy"
+        to: "auth_role_permission"
+        relation: "validates"
+      - from: "testing_strategy"
+        to: "dashboard_shell"
+        relation: "validates"
+      - from: "testing_strategy"
+        to: "admin_shell"
+        relation: "validates"
+      - from: "testing_strategy"
+        to: "extension_module"
+        relation: "validates_boundary_for"
+
+  gpt_retrieval_routes:
+    understand_project_background:
+      read_first:
+        - "architecture_overview"
+        - "global_rules"
+        - "architecture_glossary"
+      then_read_if_needed:
+        - "auth_role_permission"
+        - "dashboard"
+        - "admin"
+        - "marketing"
+        - "extension_slot"
+
+    understand_layer_model:
+      read_first:
+        - "architecture_overview"
+        - "global_rules"
+        - "architecture_glossary"
+      key_nodes:
+        - "stable_core"
+        - "variable_layer"
+        - "extension_layer"
+
+    understand_auth_boundary:
+      read_first:
+        - "auth_role_permission"
+      also_read:
+        - "global_rules"
+        - "architecture_glossary"
+      related_nodes:
+        - "dashboard"
+        - "admin"
+        - "marketing"
+        - "extension_module"
+
+    understand_dashboard_boundary:
+      read_first:
+        - "dashboard"
+      also_read:
+        - "auth_role_permission"
+        - "extension_slot"
+        - "global_rules"
+      related_nodes:
+        - "dashboard_shell"
+        - "dashboard_business_content"
+        - "admin"
+        - "marketing"
+
+    understand_admin_boundary:
+      read_first:
+        - "admin"
+      also_read:
+        - "auth_role_permission"
+        - "dashboard"
+        - "extension_slot"
+        - "global_rules"
+      related_nodes:
+        - "admin_shell"
+        - "admin_business_content"
+
+    understand_marketing_boundary:
+      read_first:
+        - "marketing"
+      also_read:
+        - "auth_role_permission"
+        - "global_rules"
+      related_nodes:
+        - "marketing_page_structure"
+        - "marketing_content"
+        - "dashboard"
+        - "admin"
+
+    understand_extension_boundary:
+      read_first:
+        - "extension_slot"
+      also_read:
+        - "dashboard"
+        - "admin"
+        - "auth_role_permission"
+        - "global_rules"
+      related_nodes:
+        - "extension_module"
+        - "stable_core"
+        - "extension_layer"
+
+  hard_constraints_for_gpt:
+    must:
+      - "把本项目理解为可复用商业网站底座模板，而不是一次性网站工程。"
+      - "优先使用 Stable Core / Variable Layer / Extension Layer 理解模块关系。"
+      - "区分 foundation、shell、business content、extension module、policy / convention。"
+      - "保持 Auth / Role / Permission 作为 foundation，不让其依赖业务模块。"
+      - "保持 Dashboard 与 Admin 职责分离。"
+      - "保持 Marketing 作为公开访问区域，不承载核心业务逻辑。"
+      - "保持 Extension Slot 作为横向接入规则，不把它当作独立业务区域。"
+      - "判断依赖时优先使用 graph 中的 allowed_dependencies 与 forbidden_dependencies。"
+
+    must_not:
+      - "不得把 workflow、phases、04-engineering-node-extraction-and-flow-preparation.md 纳入当前项目背景图谱。"
+      - "不得把 Extension Slot 误解为一个与 Marketing / Dashboard / Admin 平级的业务区域。"
+      - "不得让 Stable Core 依赖 Variable Layer 或 Extension Layer。"
+      - "不得让 Dashboard 与 Admin 互相依赖业务逻辑。"
+      - "不得让 Marketing 依赖 Dashboard / Admin 的业务逻辑。"
+      - "不得让扩展模块修改 Stable Core。"

@@ -1,0 +1,277 @@
+knowledge_file:
+  id: "current-specs-completion-direction"
+  title: "Current Specs Completion Direction"
+  purpose: "为 GPT 提供当前阶段的共享方向约束：基于已有架构知识，将网站模板项目的核心 Kiro Specs 推进到 tasks.md 粒度。"
+  audience: "GPT knowledge shared layer"
+  language_policy:
+    primary_language: "Chinese"
+    keep_english_for:
+      - "Kiro Specs"
+      - "requirements.md"
+      - "design.md"
+      - "tasks.md"
+      - "Stable Core"
+      - "Variable Layer"
+      - "Extension Layer"
+      - "foundation"
+      - "shell"
+      - "business content"
+      - "extension module"
+      - "PR"
+      - "App Router"
+      - "Prisma"
+      - "Auth.js"
+
+current_architecture_state:
+  summary: "当前项目已经形成商业网站底座模板的主要架构背景。已有知识覆盖项目总览、全局架构规则、测试策略、术语体系，以及 Auth / Role / Permission、Marketing、Dashboard、Admin、Extension Slot 等核心模块。这些内容已经足够作为 Kiro Specs 生产的上游输入。当前阶段不再以继续扩写背景说明为主，而是将已有架构能力转化为一组边界清晰、彼此协调、可继续施工的 Specs。"
+
+  status: "architecture_sources_ready_for_specs_production"
+
+  available_knowledge:
+    - "项目总览"
+    - "全局架构规则"
+    - "测试策略"
+    - "术语体系"
+    - "Auth / Role / Permission 模块架构"
+    - "Marketing 模块架构"
+    - "Dashboard 模块架构"
+    - "Admin 模块架构"
+    - "Extension Slot 模块架构"
+
+  current_shift:
+    from: "架构背景说明与模块边界沉淀"
+    to: "Kiro Specs 生产与 tasks.md 粒度收束"
+
+current_stage_goal:
+  summary: "当前阶段要把网站模板项目需要的核心 Specs 推进到 requirements.md、design.md、tasks.md 三层结构，其中 tasks.md 是当前产物完成的关键标志。"
+
+  must:
+    - "将当前范围内的核心 Specs 推进到 requirements.md / design.md / tasks.md 三层结构。"
+    - "确保每个 Spec 聚焦清晰工程域，不成为跨模块大杂烩。"
+    - "确保每个 Spec 的范围、需求、边界、非目标和设计假设清晰。"
+    - "确保相关 Specs 在底层结构、模块边界、职责划分和主要设计假设上保持协调。"
+    - "确保后续相关 Specs 能基于已定义的前置结构继续展开，而不是重复定义冲突结构。"
+
+  should:
+    - "优先基于已有架构文稿与模块边界生成 Specs。"
+    - "优先推动具体 Spec 完成，而不是反复扩写背景说明。"
+    - "优先让 Specs 形成可继续审查、施工和拆分的上游产物。"
+
+spec_output_definition:
+  required_structure:
+    - "requirements.md"
+    - "design.md"
+    - "tasks.md"
+
+  requirements_md_policy:
+    summary: "requirements.md 可通过任务包/提示词意图与既有 Kiro Steering 约束内容结构（系统指令，kiro IDE 默认遵守）。方向约束主要从目标、范围、需求边界、非目标、依赖假设等方面影响其内容。"
+    should:
+      - "明确 Spec 的目标。"
+      - "明确 Spec 的范围。"
+      - "明确 Spec 的非目标。"
+      - "明确关键功能需求与非功能需求。"
+      - "明确该 Spec 与已有架构知识的关系。"
+      - "避免引入与其他 Specs 冲突的需求假设。"
+
+  design_md_policy:
+    summary: "design.md 可通过提示词与既有 Kiro Steering 约束内容结构（系统指令，kiro IDE 默认遵守）。方向约束主要从设计边界、模块职责、主要结构、风险、与其他 Specs 的一致性等方面影响其内容。"
+    should:
+      - "明确该 Spec 的设计范围。"
+      - "明确模块职责与边界。"
+      - "明确关键设计假设。"
+      - "明确与已有架构文稿和相关 Specs 的一致性。"
+      - "避免重新定义已有前置 Spec 的基础结构。"
+      - "避免把实现细节过早写成固定方案。"
+
+  tasks_md_policy:
+    summary: "tasks.md 是 Kiro Specs 的任务层产物。其任务列表块与 Kiro IDE 执行 UI 高度相关，不应要求自定义任务块格式。方向约束只应通过 Spec 的范围、需求、设计边界和任务意图影响 tasks.md 的内容颗粒度。"
+    can_influence:
+      - "标题"
+      - "概述"
+      - "任务意图"
+      - "任务覆盖范围"
+      - "任务不应越界的内容"
+      - "任务与 requirements.md 的回指关系"
+    must_not_force:
+      - "不得要求自定义替换 Kiro 原生任务块格式。"
+      - "不得要求改变 Kiro 原生 checklist / task item / requirement trace 的基本结构。"
+      - "不得把 tasks.md 直接写成最终 PR 计划。"
+      - "不得把 tasks.md 的每一项机械等同于一个 PR。"
+    expected_effect:
+      - "通过控制 Spec 范围和设计边界，让 Kiro 生成的 tasks.md 自然聚焦于单一工程域。"
+      - "通过清晰 requirements 和 design，使 tasks.md 中的任务编号、阶段结构、子任务和 Requirements 回指可作为后续审查、施工批次和 PR 规划的信息来源。"
+
+spec_coordination_policy:
+  summary: "本项目中的 Specs 不应被理解为彼此无关的独立文档。每个 Spec 都是项目施工链路中的一个节点。一个 Spec 可以有独立目标、独立范围和独立 tasks，但它必须与其他 Specs 在底层结构、技术假设、模块边界和职责划分上保持一致。如果两个 Specs 存在自然前置关系，后续 Spec 应基于前置 Spec 的设计假设继续展开，而不是重新定义一套冲突结构。"
+
+  principle:
+    - "Specs are coordinated construction nodes, not isolated documents."
+    - "Each Spec may be independently reviewed and progressed."
+    - "Related Specs must keep compatible assumptions, boundaries, and task scopes."
+    - "Spec coordination does not mean every Spec must have a forced dependency."
+
+  must:
+    - "每个 Spec 应明确它基于哪些已有架构知识或已定义 Spec 假设。"
+    - "存在自然前置关系时，后续 Spec 应沿用前置 Spec 的底层结构与边界假设。"
+    - "同一模块能力不得在多个 Specs 中重复定义为不同含义。"
+    - "跨模块能力应保持职责分离，不能因为拆成多个 Specs 而产生边界冲突。"
+    - "后续相关 Specs 应与低风险底层框架 Spec 的基础结构假设保持一致。"
+
+  must_not:
+    - "不得把每个 Spec 写成彼此无关的孤立点。"
+    - "不得在不同 Specs 中重复定义互相冲突的目录结构、模块边界或访问规则。"
+    - "不得让后续 Spec 覆盖或推翻前置 Spec 的基础假设，除非任务明确要求修订。"
+    - "不得让多个 Specs 对同一核心能力给出互相矛盾的定义。"
+    - "不得为了制造关联而强行添加不必要的依赖关系。"
+
+low_risk_foundation_framework_spec:
+  summary: "当前允许额外规划一个低风险底层框架 Spec。它不是完整业务实现 Spec，而是为网站模板建立基础工程骨架的 Spec。后续涉及路由、目录、app shell、基础配置、shared components、lib 组织、Prisma / Auth.js 接入占位等内容的 Specs，应尽量基于这个底层框架 Spec 的结构假设继续展开，避免各自重新发明一套基础框架。"
+
+  role: "foundation_framework_spec"
+
+  purpose:
+    - "定义低风险、底层、框架型工程骨架。"
+    - "为后续 Specs 提供共享结构背景。"
+    - "降低后续 Specs 凭空设计基础结构的风险。"
+
+  suitable_scope:
+    - "项目基础目录结构"
+    - "基础 App Router 结构"
+    - "基础 layout / route shell"
+    - "marketing / dashboard / admin 空壳入口"
+    - "shared components / lib 基础组织"
+    - "Prisma / Auth.js 的占位或最小接入结构"
+    - "基础配置约定"
+
+  boundary:
+    must:
+      - "保持低风险、底层、框架型。"
+      - "只提供基础结构与接入占位。"
+      - "为其他 Specs 提供结构参考。"
+      - "避免把基础框架 Spec 扩展成完整业务实现。"
+
+    must_not:
+      - "不得扩展成完整业务系统实现。"
+      - "不得提前实现复杂权限系统。"
+      - "不得提前实现支付能力。"
+      - "不得提前实现重型插件系统。"
+      - "不得提前实现复杂数据库迁移。"
+      - "不得提前实现生产部署自动化。"
+
+  relationship_to_other_specs:
+    - "后续涉及项目结构、路由入口、shared 组织、基础 shell 的 Specs，应优先基于该 Spec 的结构假设。"
+    - "其他 Specs 可以扩展该基础框架，但不应与其基础结构冲突。"
+    - "如果后续 Spec 需要改变底层框架假设，应明确说明变更原因与影响范围。"
+
+spec_partition_policy:
+  summary: "Specs 的拆分应遵循“独立审查、相互协调”的原则。一个 Spec 应聚焦一个清晰工程域，便于后续审查、施工和 PR 规划；同时，它也必须与其他相关 Specs 保持兼容，尤其不能在底层框架、模块边界、访问规则和扩展接入方式上产生冲突。"
+
+  principle:
+    - "independent_to_review"
+    - "coordinated_to_build"
+    - "small_enough_to_reason_about"
+    - "clear_enough_to_generate_tasks"
+
+  good_spec_shape:
+    - "围绕一个清晰工程域。"
+    - "目标、范围、非目标明确。"
+    - "输入背景明确。"
+    - "与相关 Specs 的关系明确。"
+    - "requirements.md / design.md / tasks.md 语义一致。"
+    - "tasks.md 保持 Kiro 原生任务结构，但任务意图与范围应来自清晰的 requirements 和 design。"
+
+  anti_patterns:
+    - "把多个核心区域混成一个大 Spec。"
+    - "一个 Spec 同时处理 auth、dashboard、admin、marketing、deployment。"
+    - "不同 Specs 各自定义冲突的目录结构或接口假设。"
+    - "requirements.md、design.md、tasks.md 三者表达的目标不一致。"
+    - "单个 Spec 承担过多工程域，导致后续难以审查、施工或进行 PR 规划。"
+
+future_traceability_policy:
+  summary: "当前阶段不直接制定最终 PR 计划，但 Specs 应为后续审查、施工和 PR 规划提供可追踪的信息来源。可追踪性主要来自 Spec 的范围控制、requirements 回指、design 边界、tasks.md 的阶段结构与任务编号，而不是来自自定义 tasks.md 格式。"
+
+  must:
+    - "每个 Spec 应聚焦一个清晰工程域。"
+    - "每个 Spec 应避免跨多个核心区域堆叠任务。"
+    - "每个 Spec 的 requirements.md / design.md / tasks.md 应保持语义一致。"
+    - "tasks.md 中自然出现的阶段、任务编号、子任务和 Requirements 回指，可作为后续切分参考。"
+    - "后续审查、施工、PR 规划应基于 Specs 内容和真实代码状态综合判断。"
+
+  must_not:
+    - "不得为了后续 PR 切分强行改变 Kiro Specs 原生 tasks.md 任务块格式。"
+    - "不得把 tasks.md 的每个任务机械等同于一个 PR。"
+    - "不得让后续审查或 PR 规划需求反向破坏当前 Spec 的原生结构。"
+
+suggested_spec_generation_direction:
+  summary: "Specs 生产顺序可以遵循“共同基础先于依赖模块、稳定结构先于可变内容、边界清晰先于复杂扩展”的原则。该顺序不是固定流程，实际推进可以根据当前已完成状态和用户指定目标调整。"
+
+  nature: "recommended_not_mandatory"
+
+  engineering_principles:
+    - "共同前置优先。"
+    - "底层框架优先于上层业务。"
+    - "Stable Core 优先于 Variable Layer。"
+    - "模块边界优先于复杂实现。"
+    - "可独立审查优先于大而全合并。"
+
+  groups:
+    foundation_and_shared_base:
+      purpose: "先稳定影响多个后续 Specs 的共同基础。"
+      examples:
+        - "低风险底层框架 Spec"
+        - "database access patterns Spec"
+        - "auth / role / permission Spec"
+        - "shared conventions / app shell 相关 Spec"
+
+    main_area_specs:
+      purpose: "分别收束公开访问、用户工作空间、管理后台三类主要区域。"
+      examples:
+        - "marketing Spec"
+        - "dashboard Spec"
+        - "admin Spec"
+
+    extension_validation_deployment:
+      purpose: "在核心边界明确后收束扩展、验证和部署相关能力。"
+      examples:
+        - "extension slot Spec"
+        - "testing / validation Spec"
+        - "deployment baseline Spec"
+
+anti_stall_policy:
+  summary: "当前阶段应以 Specs 产出为导向。只要已有信息足够，就应推进具体 Spec 的 requirements.md / design.md / tasks.md，而不是长期停留在背景复述、原则讨论或抽象准备中。允许在必要时补充边界说明，但补充说明必须服务于某个具体 Spec 的完成。"
+
+  must:
+    - "每轮推进应尽量指向一个具体 Spec。"
+    - "信息足够时，应直接推进 requirements.md / design.md / tasks.md 的生成或补全。"
+    - "补充背景说明必须服务于具体 Spec 的完成。"
+    - "优先形成可审查、可继续施工的 Spec 产物。"
+
+  must_not:
+    - "不得长期停留在抽象原则讨论。"
+    - "不得反复重述已有项目背景而不推进 Spec。"
+    - "不得为了追求完美完整性而拖延 Specs 产出。"
+    - "不得把本可拆分的 Specs 压成一个大杂烩。"
+
+completion_criteria:
+  summary: "当前阶段完成的标志不是“方向讨论清楚”，而是 Specs 产物完成。所有纳入当前范围的核心 Specs 都应推进到 tasks.md 层，并且这些 Specs 之间在基础框架、模块边界、职责划分和主要设计假设上不存在明显冲突。"
+
+  pass_when:
+    - "所有当前范围内的核心 Specs 都具备 requirements.md、design.md、tasks.md。"
+    - "每个 Spec 的工程域清晰，不是跨模块大杂烩。"
+    - "每个 Spec 的 requirements.md / design.md / tasks.md 语义一致。"
+    - "每个 Spec 的范围、边界和前置假设足够清晰，能够作为后续审查、施工和 PR 规划的信息来源。"
+    - "tasks.md 保持 Kiro Specs 原生任务结构，不被额外格式要求污染。"
+    - "低风险底层框架 Spec 已完成到 tasks.md 粒度。"
+    - "后续相关 Specs 能基于低风险底层框架 Spec 的结构假设继续展开。"
+    - "存在自然前置关系的 Specs 之间没有明显设计冲突。"
+    - "不同 Specs 对同一核心能力没有互相矛盾的定义。"
+    - "Specs 生产整体能够持续推进，而不是停留在背景解释或原则复述。"
+
+  fail_when:
+    - "Specs 产物长期停留在 requirements.md 或 design.md，无法推进到 tasks.md。"
+    - "多个 Specs 对同一模块边界给出冲突定义。"
+    - "后续 Specs 无视底层框架 Spec 的基础结构假设。"
+    - "单个 Spec 承载过多工程域，难以后续审查或 PR 规划。"
+    - "requirements.md、design.md、tasks.md 三者表达目标不一致。"
+    - "为了自定义后续切分方式而破坏 Kiro tasks.md 的原生任务块结构。"
+    - "持续反复补充背景说明，但没有实际推进具体 Spec。"

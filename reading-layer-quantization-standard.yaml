@@ -1,0 +1,603 @@
+knowledge_file:
+  id: "reading-layer-quantization-standard"
+  title: "Reading Layer Quantization Standard"
+  purpose: "为 Leader-GPT → KiroPrompt-GPT 的任务包协作提供可量化、可检查、可复用的 GitHub 文件阅读分层标准。"
+  visible_to:
+    - "Leader-GPT"
+    - "KiroPrompt-GPT"
+  used_for:
+    - "Leader-GPT 在任务包中标注 KiroPrompt-GPT 应阅读哪些文件。"
+    - "KiroPrompt-GPT 根据标准化 Role + Depth 标签读取指定 GitHub 文件范围。"
+    - "避免 KiroPrompt-GPT 因一次性阅读过多文件导致上下文膨胀。"
+    - "避免任务包只用自然语言描述阅读要求，导致约束力弱、不稳定。"
+  not_used_for:
+    - "不定义具体 Kiro prompt 模板。"
+    - "不定义项目架构本身。"
+    - "不定义 Specs 内容结构。"
+    - "不定义自动化调度脚本。"
+    - "不定义任何运行时缓存系统实现。"
+
+context_alignment:
+  current_project_stage: "specs_completion_stage"
+  current_main_task: "基于已有架构知识，将网站模板项目的核心 Kiro Specs 推进到 tasks.md 粒度。"
+  reading_protocol_role: "本文件只解决 KiroPrompt-GPT 在收到 Leader-GPT 任务包后，如何按量化规则读取 GitHub 指定文件。"
+  expected_output_flow:
+    - "Leader-GPT 生成任务包。"
+    - "任务包使用本文件定义的 R/D 标签标注阅读范围。"
+    - "KiroPrompt-GPT 按 R/D 标签读取 GitHub 指定文件。"
+    - "KiroPrompt-GPT 基于任务包和读取结果生成 prompt-kiro.md。"
+
+core_distinction:
+  role_layer:
+    purpose: "说明材料在本轮任务中为什么要读。"
+    answers: "这份材料在本轮属于什么角色？"
+  depth_layer:
+    purpose: "说明材料在本轮任务中读到什么深度。"
+    answers: "这份材料在本轮要读多少？"
+  mandatory_pairing_rule:
+    must:
+      - "任何被纳入任务包的材料都必须同时标注 Role 和 Depth。"
+      - "Role 与 Depth 必须同时出现，不能只给其一。"
+    invalid_examples:
+      - "必须阅读 auth-role-permission.md"
+      - "相关阅读 dashboard.md"
+      - "可作背景参考"
+      - "先简单读一下"
+    valid_examples:
+      - "docs/architecture/modules/auth-role-permission.md：R1 + D5"
+      - "docs/architecture/modules/dashboard.md：R2 + D3"
+      - "KB-source-distillation.yaml：R0 + D5"
+
+material_role_levels:
+  R0:
+    name: "Shared Execution Context"
+    chinese_name: "共享执行背景"
+    definition:
+      - "KiroPrompt-GPT 默认拥有的共享背景层。"
+      - "不属于本轮新增阅读对象。"
+      - "不计入本轮新增阅读预算。"
+    suitable_for:
+      - "项目阶段摘要。"
+      - "当前方向约束。"
+      - "项目知识图谱。"
+      - "源文件蒸馏摘要。"
+      - "Kiro Specs 定义。"
+      - "长期稳定术语与协作协议摘要。"
+    current_examples:
+      - "current-specs-completion-direction.yaml"
+      - "KB-module-knowledge-graph.yaml"
+      - "KB-source-distillation.yaml"
+      - "kiro-specs-definition.yaml"
+    constraints:
+      must:
+        - "R0 应是高密度摘要层。"
+        - "R0 应短、稳、可复用。"
+      must_not:
+        - "不得把原始长模块文稿直接标为 R0。"
+        - "不得把大型代码文件直接标为 R0。"
+        - "不得把整轮对话原文直接标为 R0。"
+    default_depth: "D5"
+
+  R1:
+    name: "Mandatory"
+    chinese_name: "必须阅读"
+    definition:
+      - "本轮输出若不读取该材料，结果将明显不稳定。"
+      - "属于本轮首轮输入的核心集合。"
+    suitable_for:
+      - "当前目标文件。"
+      - "当前直接规则源。"
+      - "当前直接依赖文件。"
+      - "当前明确会影响 prompt-kiro.md 质量的关键材料。"
+    default_depth: "D3"
+    may_upgrade_to: "D5"
+    upgrade_conditions:
+      - "该文件是当前目标文件。"
+      - "该文件是当前统一定义源。"
+      - "该文件与另一 R1 文件发生口径冲突。"
+      - "当前输出需要精确引用其内部结构。"
+
+  R2:
+    name: "Directly Relevant"
+    chinese_name: "直接相关"
+    definition:
+      - "与本轮任务直接相关。"
+      - "不是所有内容都必须首轮展开。"
+      - "命中触发条件后才补读。"
+    suitable_for:
+      - "直接联动文件。"
+      - "可能发生口径冲突的相邻模块文件。"
+      - "当前目标文件引用到的关键关联文件。"
+    default_depth: "D2"
+    may_upgrade_to: "D4"
+    upgrade_conditions:
+      - "首轮阅读后信息仍不足。"
+      - "当前目标文件明确引用该文件的某个主题。"
+      - "当前发现与该文件可能存在口径冲突。"
+      - "不补读会影响本轮 prompt-kiro.md 稳定性。"
+    constraints:
+      must_not:
+        - "默认不得直接升到 D5。"
+      may:
+        - "只有 Leader-GPT 在任务包中明确授权时，R2 才可升到 D5。"
+
+  R3:
+    name: "Background Reference"
+    chinese_name: "背景参考"
+    definition:
+      - "可提供背景支持。"
+      - "默认不应在首轮深读。"
+      - "仅在需要补背景时轻量使用。"
+    suitable_for:
+      - "方向性背景文件。"
+      - "非本轮主对象但有助于理解的摘要材料。"
+      - "与当前任务关系较弱的参考材料。"
+    default_depth: "D1"
+    max_depth: "D2"
+    constraints:
+      must_not:
+        - "默认不得升到 D3 或更深。"
+      may:
+        - "只有 Leader-GPT 明确将该材料从 R3 升级为 R2 后，才允许更深读取。"
+
+  R4:
+    name: "Excluded This Round"
+    chinese_name: "本轮禁止输入"
+    definition:
+      - "本轮不应进入输入范围。"
+      - "即使文件存在，也不应纳入阅读与压缩流程。"
+    suitable_for:
+      - "与当前任务无关的材料。"
+      - "会造成明显分心的历史材料。"
+      - "当前阶段明确不应展开的实现层内容。"
+      - "已知会造成误导或冲突的旧材料。"
+    fixed_depth: "D0"
+
+reading_depth_levels:
+  D0:
+    name: "Do Not Read"
+    chinese_name: "不读"
+    definition:
+      - "本轮完全不读。"
+      - "不纳入摘要。"
+      - "不纳入推理依据。"
+
+  D1:
+    name: "Title Tree / File Skeleton Only"
+    chinese_name: "只读标题树 / 文件骨架"
+    structured_markdown:
+      read:
+        - "一级标题"
+        - "二级标题"
+        - "三级标题"
+      do_not_read:
+        - "正文"
+    non_structured_file:
+      read:
+        - "前 40 行"
+      extract_only:
+        - "文件用途"
+        - "导入导出"
+        - "主符号名"
+        - "目录位置"
+      do_not_read:
+        - "内部逻辑正文"
+
+  D2:
+    name: "Fixed Opening Blocks"
+    chinese_name: "只读固定起始区块"
+    structured_markdown:
+      read_sections:
+        - "Goal"
+        - "Scope"
+        - "Non-Goals"
+      fallback_if_missing:
+        - "只读文件前 80 行"
+    non_structured_file:
+      read:
+        - "前 80 行"
+      extract_only:
+        - "文件用途"
+        - "主导出对象"
+        - "配置入口"
+        - "路由 / schema / interface 的表层定义"
+
+  D3:
+    name: "Fixed Key Blocks"
+    chinese_name: "只读固定关键区块"
+    structured_markdown:
+      read_sections:
+        - "Goal"
+        - "Scope"
+        - "Non-Goals"
+        - "Upstream Basis"
+        - "Relationship to Other ..."
+        - "How To Use ..."
+        - "Notes"
+      missing_section_policy:
+        - "如果部分标题不存在，则跳过不存在项。"
+        - "不自动补读其他正文。"
+      fallback_if_unstructured:
+        - "只读文件前 160 行"
+    non_structured_file:
+      read:
+        - "前 160 行"
+      may_extract:
+        - "导入 / 导出"
+        - "类型定义"
+        - "配置对象外层"
+        - "路由注册"
+        - "schema 外层"
+      do_not_read:
+        - "完整内部实现逻辑"
+
+  D4:
+    name: "Topic Hit Expansion"
+    chinese_name: "按主题命中补读"
+    definition:
+      - "先完成 D2 或 D3。"
+      - "再只补读与本轮任务明确命中的章节 / 代码块。"
+    structured_markdown:
+      hit_by:
+        - "当前目标文件名"
+        - "当前 Spec 名称"
+        - "当前模块名"
+        - "当前问题关键词"
+        - "当前冲突点关键词"
+      read_only:
+        - "命中标题下的章节正文"
+    non_structured_file:
+      read_only:
+        - "命中的函数"
+        - "命中的类"
+        - "命中的组件"
+        - "命中的配置块"
+        - "命中的 schema 块"
+      max_total_lines: 240
+
+  D5:
+    name: "Full Read"
+    chinese_name: "全文阅读"
+    definition:
+      - "全文读完。"
+      - "可作为本轮核心依据。"
+      - "只允许用于极少数高价值文件。"
+    constraints:
+      must_not:
+        - "不得大量使用。"
+      should_only_use_for:
+        - "当前目标文件。"
+        - "核心规则源。"
+        - "直接冲突源。"
+        - "Leader-GPT 明确授权全文阅读的文件。"
+
+structured_vs_non_structured_rules:
+  structured_markdown_priority:
+    - "当文件具备稳定标题结构时，优先按标题执行 D1-D5。"
+    - "不优先使用行数回退。"
+  non_structured_file_policy:
+    D1: "前 40 行"
+    D2: "前 80 行"
+    D3: "前 160 行"
+    D4: "命中块累计不超过 240 行"
+    D5: "全文"
+  forbidden_vague_phrases:
+    - "简单看看"
+    - "读一下"
+    - "有需要再多看一点"
+    - "略读"
+    - "大概浏览"
+    - "做必要检查"
+  replacement_rule:
+    must:
+      - "所有模糊表达必须替换为 D0-D5。"
+
+default_mapping_rules:
+  R0:
+    default_depth: "D5"
+    prerequisite:
+      - "R0 文件必须本身就是高密度摘要层。"
+    forbidden:
+      - "原始长文稿不得直接塞进 R0。"
+
+  R1:
+    default_depth: "D3"
+    may_upgrade_to: "D5"
+    upgrade_conditions:
+      - "当前目标文件。"
+      - "当前统一定义源。"
+      - "与另一 R1 文件发生口径冲突。"
+      - "当前输出需要精确引用其内部结构。"
+
+  R2:
+    default_depth: "D2"
+    may_upgrade_to: "D4"
+    default_forbidden_upgrade: "D5"
+    may_upgrade_to_D5_only_if:
+      - "Leader-GPT 在任务包中明确授权。"
+
+  R3:
+    default_depth: "D1"
+    max_depth: "D2"
+    forbidden:
+      - "默认不得升到 D3 或更深。"
+    may_read_deeper_only_if:
+      - "Leader-GPT 明确将 R3 升级为 R2。"
+
+  R4:
+    fixed_depth: "D0"
+
+reading_budget_rules:
+  first_pass_budget:
+    default_limits:
+      D5_files_max: 1
+      D3_files_max: 2
+      D2_or_D1_files_max: 2
+      total_new_files_max: 5
+    R0_counted_in_budget: false
+    recommended_composition:
+      - "当前目标文件：1 份，R1 + D5"
+      - "直接规则源 / 直接依赖：2 份，R1 + D3"
+      - "背景或直接相关：2 份，R2/R3 + D1/D2"
+
+  expansion_budget:
+    default_limits:
+      expansion_rounds_max: 2
+      each_round_action:
+        one_of:
+          - "新增不超过 2 份文件"
+          - "升级不超过 2 份已纳入文件的深度"
+    single_task_total_limits:
+      D5_files_total_max: 2
+      total_new_files_max: 7
+      R3_files_max: 2
+
+  over_budget_policy:
+    if_still_insufficient:
+      must_not:
+        - "不得继续无控制扩读。"
+      must:
+        - "触发升级反馈。"
+        - "重新压缩任务。"
+        - "建议拆分任务。"
+
+upgrade_rules:
+  depth_upgrade:
+    D2_or_D3_to_D4_allowed_if:
+      - "当前目标文件明确引用该材料中的某一主题。"
+      - "当前输出需要补齐某个具体边界、关系或前提。"
+      - "当前发现两份核心材料之间可能口径冲突。"
+      - "当前摘要不足以支持稳定判断。"
+
+    D4_to_D5_allowed_if:
+      - "该文件已被确认是统一定义源。"
+      - "该文件是当前主对象本身。"
+      - "该文件是当前冲突的直接源头。"
+      - "Leader-GPT 在任务包中显式授权该文件可全文读。"
+
+  role_upgrade:
+    allowed:
+      - "R3 → R2"
+      - "R2 → R1"
+    conditions:
+      - "当前交付已被该文件阻塞。"
+      - "当前发现该文件不是背景，而是直接规则源。"
+      - "当前发现任务包低估了该文件的重要性。"
+
+  role_downgrade:
+    allowed:
+      - "R1 → R2"
+      - "R2 → R3"
+    conditions:
+      - "Leader-GPT 在任务包中明确写出。"
+      - "本轮复盘确认该文件重要性被高估。"
+
+stop_rules:
+  must_stop_expansion_when:
+    - "已达到首轮 + 扩读预算上限。"
+    - "已能稳定完成本轮输出。"
+    - "新增阅读只会增加背景，不会明显提升交付质量。"
+    - "已开始重复读取相近语义材料。"
+    - "已开始读取与本轮输出无直接关系的实现层内容。"
+    - "已出现为了更安心再多读几份的无边界扩张倾向。"
+
+  after_stop_allowed_actions:
+    - "开始压缩总结。"
+    - "开始形成任务输出。"
+    - "触发升级反馈。"
+    - "建议拆分任务。"
+
+  after_stop_forbidden_actions:
+    - "继续自由添加材料。"
+    - "继续无触发条件扩读。"
+
+shared_execution_context_rules:
+  R0_definition_boundary:
+    - "R0 是共享执行背景，不是所有重要文件的集合。"
+    - "R0 只应包含短、稳、高密度的摘要层。"
+
+  R0_should_include:
+    - "项目阶段摘要"
+    - "项目方向约束摘要"
+    - "协作协议摘要"
+    - "长期稳定术语与禁区摘要"
+
+  R0_current_recommended_files:
+    - "current-specs-completion-direction.yaml"
+    - "KB-module-knowledge-graph.yaml"
+    - "KB-source-distillation.yaml"
+    - "kiro-specs-definition.yaml"
+
+  R0_must_not_include:
+    - "原始长模块文稿"
+    - "大型代码文件"
+    - "历史整轮对话原文"
+
+standard_annotation_format:
+  short_format:
+    pattern: "文件路径：R? + D?"
+    examples:
+      - "current-specs-completion-direction.yaml：R0 + D5"
+      - "KB-module-knowledge-graph.yaml：R0 + D5"
+      - "docs/architecture/modules/auth-role-permission.md：R1 + D5"
+      - "docs/architecture/modules/dashboard.md：R2 + D3"
+
+  format_with_reason:
+    pattern: "文件路径：R? + D?（用途说明）"
+    examples:
+      - "docs/architecture/modules/auth-role-permission.md：R1 + D5（当前 auth spec 的直接模块源）"
+      - "docs/architecture/modules/dashboard.md：R2 + D3（仅用于校验 auth 与 dashboard 守卫边界）"
+      - "docs/architecture/01-global-rules.md：R1 + D3（当前 spec 的直接上层规则源）"
+
+leader_gpt_usage_rules:
+  role: "Leader-GPT 在任务包中使用本标准标注 KiroPrompt-GPT 的 GitHub 阅读范围。"
+
+  must:
+    - "先定义本轮输出对象。"
+    - "明确本轮要生成或修改哪一个 Kiro Spec 相关 prompt。"
+    - "明确本轮目标文件或目标模块。"
+    - "明确是否允许升级阅读。"
+    - "明确本轮阅读预算。"
+    - "为每个被纳入任务包的材料标注 Role。"
+    - "为每个被纳入任务包的材料标注 Depth。"
+    - "给出必要的扩读触发条件。"
+
+  must_not:
+    - "不得只用自然语言描述阅读范围。"
+    - "不得写“先看最相关的几个文件”。"
+    - "不得写“视情况补读”。"
+    - "不得写“适当参考背景”。"
+    - "不得下发没有 Depth 的材料。"
+    - "不得把大量文件直接标为 R1 + D5。"
+
+  valid_task_packet_reading_block_example:
+    target: "生成 Auth / Role / Permission Spec 的 prompt-kiro.md"
+    reading_scope:
+      - "current-specs-completion-direction.yaml：R0 + D5"
+      - "KB-source-distillation.yaml：R0 + D5"
+      - "kiro-specs-definition.yaml：R0 + D5"
+      - "docs/architecture/modules/auth-role-permission.md：R1 + D5（当前目标模块源）"
+      - "docs/architecture/01-global-rules.md：R1 + D3（上层规则源）"
+      - "docs/architecture/03-glossary.md：R2 + D2（术语校准）"
+      - "docs/architecture/modules/dashboard.md：R2 + D3（仅用于校验守卫关系）"
+    expansion_policy:
+      - "仅当 auth 与 dashboard/admin 守卫边界存在冲突时，允许补读相关模块到 D4。"
+      - "本轮最多扩读 1 次。"
+      - "不得新增与本轮 Spec 无关的文件。"
+
+kiro_prompt_gpt_usage_rules:
+  role: "KiroPrompt-GPT 根据 Leader-GPT 任务包中的 Role + Depth 标注读取指定 GitHub 文件，并生成 prompt-kiro.md。"
+
+  execution_order:
+    - step: 1
+      action: "加载 R0"
+      rule: "R0 作为共享背景层，先加载，但不计入本轮预算。"
+    - step: 2
+      action: "读取 R1"
+      rule: "按给定 Depth 读取全部 R1。"
+    - step: 3
+      action: "读取首轮 R2 / R3"
+      rule: "只按给定 Depth 读取，不得自行升深。"
+    - step: 4
+      action: "判断是否需要扩读"
+      rule: "只有满足任务包明确写出的触发条件，才允许扩读。"
+    - step: 5
+      action: "扩读后收束"
+      rule: "一旦补足本轮稳定输出所需信息，就停止扩读，开始压缩总结与生成 prompt-kiro.md。"
+
+  must:
+    - "严格按照任务包给出的 Role + Depth 执行阅读。"
+    - "优先使用 R0 作为项目背景，不重新读取原始长背景文件。"
+    - "在预算内读取最关键材料。"
+    - "扩读必须有明确触发条件。"
+    - "在阅读足够后及时收束到 prompt-kiro.md 生成。"
+
+  must_not:
+    - "不得自行把 R3 升到 D3 / D4 / D5。"
+    - "不得自行把 R2 升到 D5。"
+    - "不得在没有触发条件时主动扩读。"
+    - "不得在预算外继续添加文件。"
+    - "不得因担心漏信息而自由扩大上下文。"
+    - "不得把背景参考材料当成核心规则源。"
+
+common_bad_patterns:
+  - name: "Only Role Without Depth"
+    bad_example: "docs/architecture/modules/auth-role-permission.md：必须阅读"
+    problem: "KiroPrompt-GPT 不知道是全文读，还是只读 Goal / Scope / Non-Goals。"
+    correction: "docs/architecture/modules/auth-role-permission.md：R1 + D5"
+
+  - name: "Only Depth Without Role"
+    bad_example: "docs/architecture/modules/dashboard.md：D3"
+    problem: "KiroPrompt-GPT 不知道该材料是核心、直接相关还是背景。"
+    correction: "docs/architecture/modules/dashboard.md：R2 + D3"
+
+  - name: "Treat R3 As R1"
+    bad_example: "把背景参考文件首轮全文读。"
+    problem: "背景层膨胀，抢占核心材料预算。"
+    correction: "背景参考文件默认 R3 + D1 或 R3 + D2。"
+
+  - name: "Treat R2 As Full Read By Default"
+    bad_example: "既然直接相关，就一次性全文读。"
+    problem: "失去分层意义，首轮输入过重。"
+    correction: "R2 默认 D2，可按触发条件升到 D4。"
+
+  - name: "Raw Long Files In R0"
+    bad_example: "把原始长模块文稿直接设为 R0。"
+    problem: "共享执行背景失去高密度摘要属性。"
+    correction: "R0 应优先使用压缩摘要、方向约束、知识图谱。"
+
+  - name: "No Stop Condition"
+    bad_example: "如有需要继续扩读。"
+    problem: "KiroPrompt-GPT 会自然倾向继续扩读，导致上下文膨胀。"
+    correction: "明确最多扩读次数、触发条件和停止条件。"
+
+minimal_working_examples:
+  generate_auth_spec_prompt:
+    target: "生成 Auth / Role / Permission Spec 的 prompt-kiro.md"
+    reading_scope:
+      - "current-specs-completion-direction.yaml：R0 + D5"
+      - "KB-source-distillation.yaml：R0 + D5"
+      - "kiro-specs-definition.yaml：R0 + D5"
+      - "docs/architecture/modules/auth-role-permission.md：R1 + D5（目标模块源）"
+      - "docs/architecture/01-global-rules.md：R1 + D3（上层规则源）"
+      - "docs/architecture/03-glossary.md：R2 + D2（术语校准）"
+      - "docs/architecture/modules/dashboard.md：R2 + D3（仅用于校验 dashboard 守卫关系）"
+      - "docs/architecture/modules/admin.md：R2 + D3（仅用于校验 admin 守卫关系）"
+    expansion_policy:
+      - "仅当 auth / role / permission 与 dashboard 或 admin 的守卫边界存在冲突时，允许将对应模块补读到 D4。"
+      - "本轮最多扩读 1 次。"
+      - "不得新增与 auth spec 无关的文件。"
+
+  generate_dashboard_spec_prompt:
+    target: "生成 Dashboard Spec 的 prompt-kiro.md"
+    reading_scope:
+      - "current-specs-completion-direction.yaml：R0 + D5"
+      - "KB-module-knowledge-graph.yaml：R0 + D5"
+      - "KB-source-distillation.yaml：R0 + D5"
+      - "kiro-specs-definition.yaml：R0 + D5"
+      - "docs/architecture/modules/dashboard.md：R1 + D5（目标模块源）"
+      - "docs/architecture/modules/auth-role-permission.md：R1 + D3（守卫依赖源）"
+      - "docs/architecture/01-global-rules.md：R1 + D3（上层规则源）"
+      - "docs/architecture/modules/extension-slot.md：R2 + D2（扩展接入边界参考）"
+    expansion_policy:
+      - "仅当 dashboard shell 与 extension slot 接入边界不清时，允许 extension-slot.md 升到 D4。"
+      - "本轮最多扩读 1 次。"
+
+  generate_kiro_prompt_from_existing_task_packet:
+    target: "根据 Leader-GPT 任务包生成 prompt-kiro.md"
+    reading_scope_rule:
+      - "优先执行任务包中显式列出的 R/D 标注。"
+      - "任务包未列出的文件不得自行新增。"
+      - "如果任务包阅读范围不足，应返回需要补充的文件建议，而不是自由扩读。"
+    output_rule:
+      - "读取完成后直接生成 prompt-kiro.md。"
+      - "不展开无关项目背景。"
+      - "不把阅读摘要写成独立项目说明。"
+
+notes:
+  - "本文件是阅读分层量化标准，不是任务包模板。"
+  - "本文件服务于 Leader-GPT → KiroPrompt-GPT 协作。"
+  - "Role 与 Depth 必须同时使用，不允许只用其一。"
+  - "共享执行背景应优先压缩成独立摘要文件，而不是长期依赖原始长文稿。"
+  - "当项目规模继续增长时，应优先新增更好的摘要层，而不是无控制增加 R1 / D5 文件数量。"
+  - "本文件应被任务包规则引用，用于约束 KiroPrompt-GPT 的 GitHub 文件阅读范围。"
