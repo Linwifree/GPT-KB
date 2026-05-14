@@ -189,44 +189,44 @@ system_facts:
 
 agent_operation_constraints:
   must:
-    - 当用户要求生成 Spec 时，先判断该 Spec 应基于哪些已有架构文稿。
-    - 当任务涉及 Kiro Specs 时，必须明确当前项目顺序是 design.md → requirements.md → tasks.md。
-    - 生成 design.md 时，优先承接已有架构文稿、模块边界、依赖方向和实现约束。
-    - 生成 requirements.md 时，必须基于已完成的 design.md 提炼需求、范围和验收标准。
-    - 生成 tasks.md 时，必须基于已完成的 design.md 与 requirements.md 拆解可执行任务。
-    - 判断 Spec 是否完整时，必须同时检查 design.md、requirements.md、tasks.md 的承接关系。
-    - 当要求 Kiro IDE 生成 Spec 文件时，必须明确说明本轮要生成的是 design.md、requirements.md 还是 tasks.md。
-    - 给 Kiro IDE 的 Prompt 必须区分 Spec 文件生产和普通架构文稿生产。
-    - 给 Kiro IDE 的 Prompt 必须说明目标文件属于 Kiro Spec 三层结构中的哪一层。
+    - "当任务涉及 Kiro Specs 时，必须以 `layer_relationship.order` 作为当前项目的 Spec 生产顺序来源。"
+    - "当用户要求生成、审查、补全或规划 Spec 时，必须先判断该 Spec 应承接哪些已有架构文稿、模块文稿、上层规则文稿和当前项目方向。"
+    - "处理 design.md 时，必须将其视为当前项目 Spec 生产链路中的第一层，用于承接已有架构并整理设计边界、模块职责、依赖方向、主要结构、工程接入方式、风险与约束。"
+    - "处理 requirements.md 时，必须将其视为当前项目 Spec 生产链路中的第二层，用于基于 design.md 已明确的设计边界整理功能目标、用户故事、验收标准、范围边界和非目标。"
+    - "处理 tasks.md 时，必须将其视为当前项目 Spec 生产链路中的第三层，用于基于 design.md 和 requirements.md 拆解 Kiro IDE 可继续使用的工程任务列表。"
+    - "判断一个 Spec 是否完整时，必须同时检查 design.md、requirements.md、tasks.md 是否存在逐层承接关系。"
+    - "为 Kiro IDE 生成 Spec 文件生产 Prompt 时，必须明确指定本轮目标文件是 design.md、requirements.md 还是 tasks.md。"
+    - "为 Kiro IDE 生成 Spec 文件生产 Prompt 时，必须说明目标文件属于 Kiro Spec 三层结构中的哪一层，以及它应承接哪些上游上下文。"
+    - "为 Kiro IDE 生成 Spec 文件生产 Prompt 时，必须区分 Kiro Spec 文件生产与普通架构文稿生产。"
 
   must_not:
-    - 不把 Spec 理解为单一文档。
-    - 不默认按 requirements.md → design.md → tasks.md 的通用顺序处理当前项目。
-    - 不跳过 design.md 直接生成 requirements.md 或 tasks.md。
-    - 不跳过 requirements.md 直接生成 tasks.md。
-    - 不让 Kiro IDE 自行判断本轮应该生成 design.md、requirements.md 还是 tasks.md。
-    - 不把 Spec 文件和普通架构文稿混淆。
-    - 不把 design.md 写成普通 architecture document。
-    - 不把 requirements.md 写成泛泛的产品需求说明。
-    - 不把 tasks.md 写成普通 TODO list。
-    - 不让 tasks.md 承担重新设计架构的职责。
-    - 不把未确认的实现细节伪装成已有架构事实。
+    - "将 Spec 理解为单一 Markdown 文档。"
+    - "使用与 `layer_relationship.order` 不一致的 Spec 生产顺序。"
+    - "在缺少 design.md 承接关系的情况下处理 requirements.md。"
+    - "在缺少 design.md 或 requirements.md 承接关系的情况下处理 tasks.md。"
+    - "将 Spec 文件生产混同为普通架构文稿生产。"
+    - "将 design.md 写成普通 architecture document。"
+    - "将 requirements.md 写成泛泛的产品需求说明。"
+    - "将 tasks.md 写成普通 TODO list。"
+    - "让 tasks.md 承担重新设计架构边界的职责。"
+    - "将未确认的实现细节表述为已有架构事实。"
+    - "在 Kiro IDE Prompt 中省略本轮目标文件类型。"
 
   pass_when:
-    - GPT 能明确区分 design.md、requirements.md、tasks.md 的职责。
-    - GPT 能明确当前项目的 Spec 生成顺序是 design.md → requirements.md → tasks.md。
-    - GPT 能理解 tasks.md 是 Kiro IDE 原生可执行任务入口。
-    - GPT 能理解 Specs 应基于已有架构文稿生成。
-    - GPT 给 Kiro IDE 的 Prompt 会明确指定本轮生成哪一个 Spec 文件。
-    - GPT 能区分 Spec 文件生产与普通架构文稿生产。
-    - GPT 不会把 Specs 当作普通 Markdown 文档或普通待办清单。
+    - "GPT 能明确区分 design.md、requirements.md、tasks.md 的职责。"
+    - "GPT 能以 `layer_relationship.order` 为准处理当前项目的 Spec 生产顺序。"
+    - "GPT 能理解 design.md 是第一层，requirements.md 承接 design.md，tasks.md 同时承接 design.md 和 requirements.md。"
+    - "GPT 能理解 tasks.md 是 Kiro IDE 可继续使用的工程任务列表，而不是普通待办清单。"
+    - "GPT 能理解 Specs 应基于已有架构文稿、模块边界、依赖方向和当前项目方向生成。"
+    - "GPT 为 Kiro IDE 生成 Prompt 时，会明确指定本轮生成哪个 Spec 文件。"
+    - "GPT 能区分 Kiro Spec 文件生产与普通架构文稿生产。"
 
   fail_when:
-    - GPT 把 Spec 当作单层文档处理。
-    - GPT 默认按 requirements.md → design.md → tasks.md 的通用顺序处理当前项目。
-    - GPT 生成 requirements.md 时没有承接 design.md。
-    - GPT 生成 tasks.md 时没有承接 design.md 和 requirements.md。
-    - GPT 在没有读取相关架构文稿的情况下直接设计 Spec。
-    - GPT 给 Kiro IDE 的 Prompt 没有说明要生成哪一个 Spec 文件。
-    - GPT 把 Spec 文件当成普通架构文稿生成。
-    - GPT 把 Kiro IDE task 执行能力忽略掉。
+    - "GPT 将 Spec 当作单层 Markdown 文档处理。"
+    - "GPT 使用与 `layer_relationship.order` 不一致的 Spec 生产顺序。"
+    - "GPT 处理 requirements.md 时没有承接 design.md。"
+    - "GPT 处理 tasks.md 时没有同时承接 design.md 和 requirements.md。"
+    - "GPT 在没有确认相关架构文稿、模块边界或当前项目方向的情况下直接设计 Spec。"
+    - "GPT 为 Kiro IDE 生成 Prompt 时没有说明本轮目标文件是 design.md、requirements.md 还是 tasks.md。"
+    - "GPT 将 Kiro Spec 文件当成普通架构文稿生成。"
+    - "GPT 将 tasks.md 当成普通 TODO list。"

@@ -23,16 +23,6 @@ knowledge_graph:
       - path: "docs/architecture/modules/extension-slot.md"
         role: "Extension Slot 接入原则架构"
 
-    excluded_sources:
-      - path: ".kiro/"
-        reason: "不进入当前 GPT 项目背景知识图谱。"
-      - path: "docs/architecture/workflow/"
-        reason: "workflow 属于旧/后续流程层，不进入当前项目背景知识图谱。"
-      - path: "docs/architecture/phases/"
-        reason: "phases 属于旧/后续阶段规划层，不进入当前项目背景知识图谱。"
-      - path: "docs/architecture/04-engineering-node-extraction-and-flow-preparation.md"
-        reason: "该文件服务于工程节点提炼、workflow、流程图准备；当前知识图谱只保留已有项目背景与模块关系。"
-
   nodes:
     project:
       id: "commercial_site_template"
@@ -789,9 +779,8 @@ knowledge_graph:
       - "判断依赖时优先使用 graph 中的 allowed_dependencies 与 forbidden_dependencies。"
 
     must_not:
-      - "不得把 workflow、phases、04-engineering-node-extraction-and-flow-preparation.md 纳入当前项目背景图谱。"
-      - "不得把 Extension Slot 误解为一个与 Marketing / Dashboard / Admin 平级的业务区域。"
-      - "不得让 Stable Core 依赖 Variable Layer 或 Extension Layer。"
-      - "不得让 Dashboard 与 Admin 互相依赖业务逻辑。"
-      - "不得让 Marketing 依赖 Dashboard / Admin 的业务逻辑。"
-      - "不得让扩展模块修改 Stable Core。"
+      - "把 Extension Slot 误解为一个与 Marketing / Dashboard / Admin 平级的业务区域。"
+      - "让 Stable Core 依赖 Variable Layer 或 Extension Layer。"
+      - "让 Dashboard 与 Admin 互相依赖业务逻辑。"
+      - "让 Marketing 依赖 Dashboard / Admin 的业务逻辑。"
+      - "让扩展模块修改 Stable Core。"

@@ -13,6 +13,25 @@ knowledge_file:
       - "不作为中间层 schema"
       - "不作为代码实现任务图"
 
+project_orientation:
+  project_type: "可复用商业网站底座模板"
+  target_user: "外包客户 / 小型商业网站 / 可升级 lite SaaS 骨架"
+  current_stage: "架构背景已足够，当前优先推进 Kiro Specs 到 tasks.md 粒度"
+  fixed_tech_stack:
+    - "Next.js App Router"
+    - "TypeScript"
+    - "Postgres"
+    - "Prisma"
+    - "Auth.js"
+    - "Docker Compose"
+    - "Caddy"
+  core_areas:
+    - "Marketing"
+    - "Dashboard"
+    - "Admin"
+    - "Auth / Role / Permission"
+    - "Extension Slot"
+    
 source_units:
 
   - unit_id: "project_overview"
