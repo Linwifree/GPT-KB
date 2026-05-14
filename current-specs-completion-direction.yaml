@@ -43,10 +43,10 @@ current_architecture_state:
     to: "Kiro Specs 生产与 tasks.md 粒度收束"
 
 current_stage_goal:
-  summary: "当前阶段要把网站模板项目需要的核心 Specs 推进到 design.md -> requirements.md -> tasks.md 三层结构，其中 tasks.md 是当前产物完成的关键标志。"
+  summary: "当前阶段要把网站模板项目需要的核心 Specs 推进到 design.md → requirements.md → tasks.md 三层结构，其中 tasks.md 是当前产物完成的关键标志。"
 
   must:
-    - "将当前范围内的核心 Specs 推进到 design.md /requirements.md / tasks.md 三层结构。"
+    - "将当前范围内的核心 Specs 推进到 design.md / requirements.md / tasks.md 三层结构。"
     - "确保每个 Spec 聚焦清晰工程域，不成为跨模块大杂烩。"
     - "确保每个 Spec 的范围、需求、边界、非目标和设计假设清晰。"
     - "确保相关 Specs 在底层结构、模块边界、职责划分和主要设计假设上保持协调。"
@@ -194,14 +194,14 @@ spec_partition_policy:
     - "目标、范围、非目标明确。"
     - "输入背景明确。"
     - "与相关 Specs 的关系明确。"
-    - "design.md / requirements.md / tasks.md 语义一致。"
-    - "tasks.md 保持 Kiro 原生任务结构，但任务意图与范围应来自清晰的 requirements 和 design。"
+    - "tasks.md 保持 Kiro 原生任务结构，但任务意图与范围应来自清晰的 design.md 和 requirements.md。"
+    
 
   anti_patterns:
     - "把多个核心区域混成一个大 Spec。"
     - "一个 Spec 同时处理 auth、dashboard、admin、marketing、deployment。"
     - "不同 Specs 各自定义冲突的目录结构或接口假设。"
-    - "requirements.md、design.md、tasks.md 三者表达的目标不一致。"
+    - "design.md、requirements.md、tasks.md 三者表达的目标不一致。"
     - "单个 Spec 承担过多工程域，导致后续难以审查、施工或进行 PR 规划。"
 
 future_traceability_policy:
@@ -273,7 +273,7 @@ completion_criteria:
   summary: "当前阶段完成的标志不是“方向讨论清楚”，而是 Specs 产物完成。所有纳入当前范围的核心 Specs 都应推进到 tasks.md 层，并且这些 Specs 之间在基础框架、模块边界、职责划分和主要设计假设上不存在明显冲突。"
 
   pass_when:
-    - "所有当前范围内的核心 Specs 都具备  。"
+    - "所有当前范围内的核心 Specs 都具备 design.md、requirements.md、tasks.md 三层产物。"
     - "每个 Spec 的工程域清晰，不是跨模块大杂烩。"
     - "每个 Spec 的 design.md / requirements.md / tasks.md 语义一致。"
     - "每个 Spec 的范围、边界和前置假设足够清晰，能够作为后续审查、施工和 PR 规划的信息来源。"
