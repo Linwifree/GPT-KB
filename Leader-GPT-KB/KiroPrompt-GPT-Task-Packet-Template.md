@@ -23,7 +23,6 @@ kiro_prompt_task_packet_requirements:
     end: "<<<KIRO_PROMPT_TASK_PACKET_END>>>"
 
   required_sections:
-    - "Round"
     - "Task Title"
     - "Target File"
     - "File Context"
@@ -34,12 +33,6 @@ kiro_prompt_task_packet_requirements:
     - "Expected Output"
 
   section_requirements:
-    Round:
-      must_include:
-        - "Round ID"
-        - "Creator: Leader-GPT"
-        - "Recipient: KiroPrompt-GPT"
-
     Task_Title:
       purpose: "一句话说明本轮要生成什么 prompt-kiro.md。"
       must_not:
@@ -114,20 +107,15 @@ kiro_prompt_task_packet_requirements:
 <<<KIRO_PROMPT_TASK_PACKET_START>>>
 # KiroPrompt-GPT Task Packet
 
-## 1. Round
-- Round ID:
-- Creator: Leader-GPT
-- Recipient: KiroPrompt-GPT
-
-## 2. Task Title
+## 1. Task Title
 [一句话说明本轮任务]
 
-## 3. Target File
+## 2. Target File
 - Target File:
 - File Operation:
 - File Type:
 
-## 4. File Context
+## 3. File Context
 - Belongs To:
 - File Role:
 - Upstream Files / Upstream Basis:
@@ -136,10 +124,10 @@ kiro_prompt_task_packet_requirements:
   - Spec Layer: design.md | requirements.md | tasks.md
   - Spec Order: design.md → requirements.md → tasks.md
 
-## 5. Task Intent
+## 4. Task Intent
 [说明本轮希望 KiroPrompt-GPT 生成什么方向的 prompt-kiro.md]
 
-## 6. Scope Boundary
+## 5. Scope Boundary
 
 ### In Scope
 - ...
@@ -147,18 +135,18 @@ kiro_prompt_task_packet_requirements:
 ### Out of Scope
 - ...
 
-## 7. Reading Scope
+## 6. Reading Scope
 - `...`: R0 + D5（用途说明）
 - `...`: R1 + D5（用途说明）
 - `...`: R2 + D3（用途说明）
 
-## 8. Expansion Permission
+## 7. Expansion Permission
 - Allow Expansion:
 - Expansion Conditions:
   - ...
 - Max Expansion Times:
 
-## 9. Expected Output
+## 8. Expected Output
 - Output File: `prompt-kiro.md`
 - Output Requirements:
   - 可直接发送给 Kiro IDE

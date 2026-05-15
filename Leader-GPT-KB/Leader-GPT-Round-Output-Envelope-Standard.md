@@ -77,23 +77,7 @@ strong_markers:
 <<<REVIEW_INTENT_PACKET_END>>>
 
 <<<ROUND_META_START>>>
-{
-  "round_id": 1,
-  "action": "Create",
-  "creator": "Leader-GPT",
-  "output_artifacts": [
-    {
-      "type": "kiro_prompt_task_packet",
-      "recipient": "KiroPrompt-GPT"
-    },
-    {
-      "type": "review_intent_packet",
-      "recipient": "Review-GPT"
-    }
-  ],
-  "target_file": ".kiro/specs/<spec-name>/<target-file>.md",
-  "created_at": "YYYY-MM-DDTHH:MM:SSZ"
-}
+[这里放由 Round-Meta-Template.md 生成的合法 JSON]
 <<<ROUND_META_END>>>
 ```
 
@@ -166,9 +150,10 @@ outside_block_policy:
 ```yaml
 round_meta_alignment:
   must:
-    - "round_meta.round_id 必须与 KiroPrompt-GPT Task Packet 和 Review Intent Packet 中的 Round ID 一致。"
     - "round_meta.action 必须反映本轮动作类型。"
     - "round_meta.target_file 必须是本轮打算新增或大修的唯一目标文件。"
+    - "round_meta.target_file 必须与 KiroPrompt-GPT Task Packet 中的 Target File 一致。"
+    - "round_meta.target_file 必须与 Review Intent Packet 中的 Review Target 一致。"
     - "round_meta.output_artifacts 必须固定对应前两个 Markdown 区块。"
 
   action_allowed_values:

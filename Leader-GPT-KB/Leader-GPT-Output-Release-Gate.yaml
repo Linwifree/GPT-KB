@@ -179,18 +179,16 @@ check_groups:
 
   cross_block_alignment_check:
     must:
-      - "三个区块的 Round ID 一致。"
-      - "KiroPrompt-GPT Task Packet 的 target_file 与 Round Meta 的 target_file 一致。"
-      - "Review Intent Packet 的审查目标与 Round Meta 的 target_file 一致。"
+      - "KiroPrompt-GPT Task Packet 的 Target File 与 Round Meta 的 target_file 一致。"
+      - "Review Intent Packet 的 Review Target 与 Round Meta 的 target_file 一致。"
       - "Round Meta 的 action 与输入类型和本轮意图一致。"
       - "三个区块都服务同一轮任务。"
 
     fail_when:
-      - "三个区块 Round ID 不一致。"
-      - "任务包 target_file 与 Round Meta target_file 不一致。"
-      - "审查意图包审查目标与 Round Meta target_file 不一致。"
+      - "任务包 Target File 与 Round Meta target_file 不一致。"
+      - "审查意图包 Review Target 与 Round Meta target_file 不一致。"
       - "Round Meta action 与本轮输入类型冲突。"
-      - "三个区块看起来属于不同轮次或不同目标文件。"
+      - "三个区块看起来属于不同目标文件。"
 
   outside_block_check:
     must:
@@ -230,7 +228,7 @@ fail_when:
   - "Reading Scope 缺少 R? + D? 标注。"
   - "KiroPrompt-GPT Task Packet 与 Review Intent Packet 内容混写。"
   - "KiroPrompt-GPT Task Packet 或 Review Intent Packet 写入 Round Meta JSON。"
-  - "三个区块的 target_file 或 Round ID 不一致。"
+  - "三个区块的 target_file 不一致。"
 
 stop_when_failed:
   - "不得正式输出。"

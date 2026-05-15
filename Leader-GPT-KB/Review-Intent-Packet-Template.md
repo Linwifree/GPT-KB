@@ -24,7 +24,6 @@ review_intent_packet_requirements:
     end: "<<<REVIEW_INTENT_PACKET_END>>>"
 
   required_sections:
-    - "Round"
     - "Review Target"
     - "Leader Intent"
     - "Expected Alignment"
@@ -33,12 +32,6 @@ review_intent_packet_requirements:
     - "Optional Reading Scope"
 
   section_requirements:
-    Round:
-      must_include:
-        - "Round ID"
-        - "Creator: Leader-GPT"
-        - "Recipient: Review-GPT"
-
     Review_Target:
       purpose: "说明本轮应审查的唯一 target_file，以及它所属的 Spec 或文件上下文。"
       must_include:
@@ -94,34 +87,29 @@ review_intent_packet_requirements:
 <<<REVIEW_INTENT_PACKET_START>>>
 # Review Intent Packet
 
-## 1. Round
-- Round ID:
-- Creator: Leader-GPT
-- Recipient: Review-GPT
-
-## 2. Review Target
+## 1. Review Target
 - Related Spec / File Context:
 - Target File:
   - `.../<target-file>.md`
 
-## 3. Leader Intent
+## 2. Leader Intent
 [说明本轮原本希望这些文件完成什么目标]
 
-## 4. Expected Alignment
+## 3. Expected Alignment
 - ...
 - ...
 
-## 5. Review Focus
+## 4. Review Focus
 - ...
 - ...
 
-## 6. Do Not Overreview
+## 5. Do Not Overreview
 - 不要把 tasks.md 审成 PR 计划。
 - 不要要求改变 Kiro 原生任务块格式。
 - 不要因为没有实现代码而判定 Spec 失败。
 - 不要审查本轮目标之外的内容。
 
-## 7. Optional Reading Scope
+## 6. Optional Reading Scope
 - `...`: R0 + D5（用途说明）
 - `...`: R1 + D3（用途说明）
 <<<REVIEW_INTENT_PACKET_END>>>
