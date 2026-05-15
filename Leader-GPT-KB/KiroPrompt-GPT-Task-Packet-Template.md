@@ -25,7 +25,8 @@ kiro_prompt_task_packet_requirements:
   required_sections:
     - "Round"
     - "Task Title"
-    - "Target Spec"
+    - "Target File"
+    - "File Context"
     - "Task Intent"
     - "Scope Boundary"
     - "Reading Scope"
@@ -42,17 +43,28 @@ kiro_prompt_task_packet_requirements:
     Task_Title:
       purpose: "一句话说明本轮要生成什么 prompt-kiro.md。"
       must_not:
-        - "不得写成“继续优化”“看一下相关内容”这类模糊标题。"
+        - "写成“继续优化”“看一下相关内容”这类模糊标题。"
 
-    Target_Spec:
+    Target_File:
       must_include:
+        - "Target File"
+        - "File Operation"
+        - "File Type"
+      rule:
+        - "Target File 是本轮唯一直接工作单位。"
+        - "不得把一个完整 Spec 的三层文件同时写成 Target File。"
+
+    File_Context:
+      must_include_when_kiro_spec_file:
         - "Spec Name"
-        - "Spec Operation"
-        - "Expected Spec Files"
-      expected_spec_files:
-        - "requirements.md"
-        - "design.md"
-        - "tasks.md"
+        - "Spec Layer: design.md | requirements.md | tasks.md"
+        - "Upstream Files"
+      order_reference:
+        - "当前项目 Spec 顺序为 design.md → requirements.md → tasks.md。"
+      must_include_when_non_spec_file:
+        - "Belongs To"
+        - "File Role"
+        - "Upstream Basis"
 
     Task_Intent:
       purpose: "说明本轮希望 KiroPrompt-GPT 把什么 Leader-GPT 意图转成 prompt-kiro.md。"
@@ -74,7 +86,7 @@ kiro_prompt_task_packet_requirements:
         - "每个文件必须使用 R? + D? 标注。"
         - "每个文件应带一句用途说明。"
       must_not:
-        - "不得写“相关文件”“必要时参考”“看一下模块文稿”等模糊阅读要求。"
+        - "写“相关文件”“必要时参考”“看一下模块文稿”等模糊阅读要求。"
 
     Expansion_Permission:
       purpose: "说明本轮是否允许扩读。"
@@ -83,7 +95,7 @@ kiro_prompt_task_packet_requirements:
         - "允许扩读的触发条件"
         - "最多扩读次数"
       must_not:
-        - "不得写“视情况扩读”。"
+        - "写“视情况扩读”。"
 
     Expected_Output:
       must_include:
@@ -91,9 +103,9 @@ kiro_prompt_task_packet_requirements:
         - "输出应可直接发送给 Kiro IDE"
         - "输出必须聚焦目标 Spec"
       must_not:
-        - "不得要求 KiroPrompt-GPT 输出 Review-GPT 审查内容。"
-        - "不得要求 KiroPrompt-GPT 输出 round meta。"
-        - "不得解释 KiroPrompt-GPT 应如何执行 R/D 阅读标准。"
+        - "要求 KiroPrompt-GPT 输出 Review-GPT 审查内容。"
+        - "要求 KiroPrompt-GPT 输出 round meta。"
+        - "解释 KiroPrompt-GPT 应如何执行 R/D 阅读标准。"
 ```
 
 ## 建议 Markdown 骨架
@@ -110,18 +122,24 @@ kiro_prompt_task_packet_requirements:
 ## 2. Task Title
 [一句话说明本轮任务]
 
-## 3. Target Spec
-- Spec Name:
-- Spec Operation:
-- Expected Spec Files:
-  - requirements.md
-  - design.md
-  - tasks.md
+## 3. Target File
+- Target File:
+- File Operation:
+- File Type:
 
-## 4. Task Intent
+## 4. File Context
+- Belongs To:
+- File Role:
+- Upstream Files / Upstream Basis:
+- If Kiro Spec File:
+  - Spec Name:
+  - Spec Layer: design.md | requirements.md | tasks.md
+  - Spec Order: design.md → requirements.md → tasks.md
+
+## 5. Task Intent
 [说明本轮希望 KiroPrompt-GPT 生成什么方向的 prompt-kiro.md]
 
-## 5. Scope Boundary
+## 6. Scope Boundary
 
 ### In Scope
 - ...
@@ -129,18 +147,18 @@ kiro_prompt_task_packet_requirements:
 ### Out of Scope
 - ...
 
-## 6. Reading Scope
+## 7. Reading Scope
 - `...`: R0 + D5（用途说明）
 - `...`: R1 + D5（用途说明）
 - `...`: R2 + D3（用途说明）
 
-## 7. Expansion Permission
+## 8. Expansion Permission
 - Allow Expansion:
 - Expansion Conditions:
   - ...
 - Max Expansion Times:
 
-## 8. Expected Output
+## 9. Expected Output
 - Output File: `prompt-kiro.md`
 - Output Requirements:
   - 可直接发送给 Kiro IDE

@@ -27,7 +27,7 @@ role_contract:
     name: "file_context"
     meaning:
       - "target_file 不是孤立文件。"
-      - "如果 target_file 属于 Kiro Spec，则需要考虑 requirements.md → design.md → tasks.md 的层级关系。"
+      - "如果 target_file 属于 Kiro Spec，则需要考虑 design.md → requirements.md → tasks.md 的层级关系。"
       - "如果 target_file 属于模块文稿、上层规则或知识文件，则按其文件类型理解上下文。"
 ```
 
@@ -50,7 +50,7 @@ current_stage_goal:
     - "持续推进具体文件产出，避免长期停留在背景复述或抽象讨论。"
 
   should:
-    - "优先按 requirements.md → design.md → tasks.md 的顺序推进 Kiro Spec 文件。"
+    - "优先按 design.md → requirements.md → tasks.md 的顺序推进 Kiro Spec 文件。"
     - "优先让后续文件基于已有上游文件展开，而不是重新定义冲突结构。"
     - "必要时可以推进模块文稿、上层规则文件或知识文件，但每轮仍只锁定一个 target_file。"
 ```
@@ -153,12 +153,12 @@ target_file_policy:
       - "Upstream Files: 同一 Spec 中应作为前置依据的文件"
 
     relation_rules:
-      requirements_md:
-        meaning: "需求层，通常是同一 Spec 的起点。"
       design_md:
-        meaning: "设计层，应基于同一 Spec 的 requirements.md。"
+        meaning: "设计层，是当前项目 Spec 生产链路中的第一层，应承接已有架构文稿、模块边界、上层规则和当前项目方向。"
+      requirements_md:
+        meaning: "需求层，是当前项目 Spec 生产链路中的第二层，应基于同一 Spec 的 design.md 整理目标、范围、用户故事、验收标准和非目标。"
       tasks_md:
-        meaning: "任务层，应基于同一 Spec 的 requirements.md 和 design.md。"
+        meaning: "任务层，是当前项目 Spec 生产链路中的第三层，应基于同一 Spec 的 design.md 和 requirements.md 拆解可执行任务。"
 
   if_non_spec_file:
     must_include_in_task_packet:
@@ -204,9 +204,10 @@ knowledge_file_quick_guide:
       - "为 Task Intent 与 Review Intent 提供压缩背景。"
 
   KB-file-unit-intros:
-    use_for:
-      - "快速判断某个源文件的用途。"
-      - "帮助判断某个文件在任务包 Reading Scope 中应属于 R1、R2 还是 R3。"
+    status: "not_available"
+    rule:
+      - "当前知识库未提供该文件，不应作为必需导航入口。"
+      - "判断文件用途时，优先使用 KB-source-distillation 与 KB-module-knowledge-graph。"
 
   kiro-specs-definition:
     use_for:
@@ -237,11 +238,8 @@ knowledge_file_quick_guide:
 
   leader-round-output-envelope-standard:
     use_for:
-      - "将三个输出区块按固定强 marker 组合成一轮正式输出。"
-
-  leader-output-release-gate:
-    use_for:
-      - "最终输出前自检。"
+      - "组合三个输出区块。"
+      - "使用文件内 release_check 作为最终输出前自检。"
       - "确认三个区块完整、顺序正确、格式正确。"
 ```
 
@@ -339,22 +337,35 @@ default_execution_order:
       - "是用户新指令、上一轮 Summary，还是大修返工包？"
 
   - step: 2
+    action: "处理 Summary 或大修返工包。"
+    if_summary:
+      - "判断上一轮 target_file 是否完成。"
+      - "提取上一轮对后续 Specs、模块文稿或知识文件的影响。"
+      - "判断下一轮更适合推进哪个 target_file。"
+    if_major_revision_packet:
+      - "将 action 设为 MajorRevision。"
+      - "将返工包指向的已有文件作为候选 target_file。"
+
+  - step: 3
     action: "判断 action。"
     allowed_values:
       - "Create"
       - "MajorRevision"
-
-  - step: 3
-    action: "确定本轮唯一 target_file。"
+    rule:
+      - "输入是大修返工包或用户明确要求大修时，action = MajorRevision。"
+      - "否则正常推进时，action = Create。"
 
   - step: 4
+    action: "确定本轮唯一 target_file。"
+
+  - step: 5
     action: "确定 file_context。"
     check:
       - "target_file 是否属于 Kiro Spec。"
       - "如果属于 Kiro Spec，它是哪一层。"
       - "如果不属于 Kiro Spec，它属于哪类文件。"
 
-  - step: 5
+  - step: 6
     action: "理解本轮目标文件所需项目背景。"
     use_as_needed:
       - "leader-gpt-knowledge-catalog"
@@ -364,31 +375,31 @@ default_execution_order:
       - "KB-file-unit-intros"
       - "kiro-specs-definition"
 
-  - step: 6
+  - step: 7
     action: "生成 KiroPrompt-GPT Task Packet。"
     use:
       - "kiro-prompt-task-packet-template"
       - "reading-layer-quantization-standard"
 
-  - step: 7
+  - step: 8
     action: "生成 Review Intent Packet。"
     use:
       - "review-intent-packet-template"
 
-  - step: 8
+  - step: 9
     action: "生成 Round Meta JSON。"
     use:
       - "round-meta-template"
 
-  - step: 9
+  - step: 10
     action: "按联合发布格式组合三个区块。"
     use:
       - "leader-round-output-envelope-standard"
 
-  - step: 10
+  - step: 11
     action: "发布前执行 release gate 自检。"
     use:
-      - "leader-output-release-gate"
+      - "leader-round-output-envelope-standard.release_check"
 ```
 
 ---
@@ -448,3 +459,4 @@ output_style:
 ```
 
 则必须进入正式三块输出格式。
+

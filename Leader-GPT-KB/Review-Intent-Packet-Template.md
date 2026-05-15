@@ -40,10 +40,13 @@ review_intent_packet_requirements:
         - "Recipient: Review-GPT"
 
     Review_Target:
-      purpose: "说明本轮应审查哪些新生成或修改文件。"
+      purpose: "说明本轮应审查的唯一 target_file，以及它所属的 Spec 或文件上下文。"
       must_include:
-        - "Target Files"
-        - "Related Spec"
+        - "Target File"
+        - "Related Spec 或 File Context"
+      rule:
+        - "Review Intent Packet 只表达本轮 target_file 的审查意图。"
+        - "不得默认把同一 Spec 的三层文件全部列为本轮审查目标。"
 
     Leader_Intent:
       purpose: "说明 Leader-GPT 本轮原本希望产物完成什么目标。"
@@ -66,7 +69,7 @@ review_intent_packet_requirements:
         - "是否完成本轮目标"
         - "是否保持单一工程域"
         - "是否存在跨模块大杂烩"
-        - "requirements.md / design.md / tasks.md 语义是否一致"
+        - "design.md / requirements.md / tasks.md 语义是否一致"
         - "是否与已有模块边界冲突"
 
     Do_Not_Overreview:
@@ -97,11 +100,9 @@ review_intent_packet_requirements:
 - Recipient: Review-GPT
 
 ## 2. Review Target
-- Related Spec:
-- Target Files:
-  - `.../requirements.md`
-  - `.../design.md`
-  - `.../tasks.md`
+- Related Spec / File Context:
+- Target File:
+  - `.../<target-file>.md`
 
 ## 3. Leader Intent
 [说明本轮原本希望这些文件完成什么目标]
