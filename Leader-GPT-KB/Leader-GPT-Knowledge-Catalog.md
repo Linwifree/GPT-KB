@@ -11,6 +11,17 @@ knowledge_catalog:
     - "帮助 Leader-GPT 按信息节点选择正确文件，而不是把所有知识文件平均使用。"
     - "区分项目背景类、Specs 方向类、阅读协议类、输出模板类、输出 envelope 类与发布闸门类文件。"
 
+  instruction_offload_contract:
+    meaning:
+      - "Leader-GPT Instruction 只保留角色启动、主工作流、极简导航和硬边界。"
+      - "本 Catalog 承接详细知识文件导航、信息节点路由、默认调用顺序和模板细节归属说明。"
+    catalog_owns:
+      - "每个 Knowledge 文件的详细用途。"
+      - "每个信息节点应调用哪些文件。"
+      - "Summary / 大修返工包的详细处理参考。"
+      - "Envelope 与 Release Gate 的区分。"
+      - "Task Packet / Review Intent / Round Meta 的模板归属边界。"
+
   usage_principle:
     - "先判断当前阶段与任务类型，再选择知识文件。"
     - "项目背景类文件用于理解模块与边界。"
@@ -21,7 +32,7 @@ knowledge_catalog:
     - "不得把项目背景文件当作输出格式模板。"
     - "不得把 envelope 文件当作 release gate。"
     - "不得把 release gate 文件当作输出模板。"
-````
+```
 
 ---
 
@@ -236,6 +247,20 @@ information_node_routing:
       - "current-specs-completion-direction"
       - "KB-source-distillation"
       - "KB-module-knowledge-graph"
+    summary_extract:
+      - "上一轮 target_file。"
+      - "上一轮是否完成目标。"
+      - "新增或修改的关键内容。"
+      - "产生的重要设计假设。"
+      - "对后续 Specs、模块文稿或知识文件的影响。"
+      - "下一轮更适合推进的 target_file。"
+    major_revision_packet_rule:
+      - "输入是大修返工包时，action = MajorRevision。"
+      - "返工包指向的已有文件优先作为 target_file。"
+    must_not:
+      - "把 Summary 当作完整源文件。"
+      - "把 Summary 当作 Review-GPT 审查结论。"
+      - "仅因 Summary 提到风险就自动 MajorRevision。"
 
   decide_round_action:
     purpose: "判断本轮 action 是 Create 还是 MajorRevision。"
@@ -338,7 +363,22 @@ default_execution_order:
 
 ---
 
-## 9. 使用边界
+## 9. 模板细节归属
+
+```yaml
+template_detail_policy:
+  rule:
+    - "Task Packet 细节以 KiroPrompt-GPT-Task-Packet-Template.md 为准。"
+    - "Review Intent 细节以 Review-Intent-Packet-Template.md 为准。"
+    - "Round Meta 字段以 Round-Meta-Template.md 为准。"
+    - "Envelope 以 Leader-GPT-Round-Output-Envelope-Standard.md 为准。"
+    - "Release Gate 以 Leader-GPT-Output-Release-Gate.yaml 为准。"
+    - "Instruction 不重复这些模板细节。"
+```
+
+---
+
+## 10. 使用边界
 
 ```yaml
 catalog_boundary:
