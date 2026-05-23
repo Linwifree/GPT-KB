@@ -1,0 +1,323 @@
+system_facts:
+  file_identity:
+    id: "leader-work-summary-template"
+    name: "Leader Work Summary Template"
+    owner_role: "Leader-GPT"
+    use_stage: "before_commitLeaderArtifacts"
+    purpose: "定义 commitLeaderArtifacts.leader_work_summary_json 的字段结构、字段语义和生成约束。"
+
+  artifact_identity:
+    action_field: "leader_work_summary_json"
+    format: "JSON object"
+    submitted_via: "commitLeaderArtifacts"
+    stored_by_gateway_as: "leader-work-summary.json"
+
+  scope_boundary:
+    owns:
+      - "leader_work_summary_json 的 required fields。"
+      - "leader_work_summary_json 的字段语义。"
+      - "action 与 expected_action 的一致性。"
+      - "file_change.type 与 action 的配对关系。"
+      - "target_file 与 task_packet_md / review_intent_pack_md 的一致性。"
+      - "boundary / dependencies / memory_note 的最小语义摘要。"
+
+    does_not_own:
+      - "不定义 task_packet_md 的 Markdown 正文结构。"
+      - "不定义 review_intent_pack_md 的 Markdown 正文结构。"
+      - "不生成 round_id。"
+      - "不生成 created_at。"
+      - "不生成 creator。"
+      - "不生成 output_artifacts。"
+      - "不写 Gateway 内部状态。"
+      - "不决定 routing、next_actor、lock 或 status。"
+
+leader_work_summary_json_schema:
+  type: "object"
+  additionalProperties: false
+
+  required:
+    - "schema_version"
+    - "action"
+    - "file_change"
+    - "main_goal"
+    - "behavior"
+    - "boundary"
+    - "dependencies"
+    - "memory_note"
+
+  fields:
+    schema_version:
+      type: "string"
+      fixed_value: "1.0"
+      meaning: "leader_work_summary_json 的 schema 版本。"
+
+    action:
+      type: "string"
+      allowed_values:
+        - "Create"
+        - "MajorRevision"
+      source_of_truth: "getLeaderContext.expected_action"
+      meaning:
+        Create: "本轮生成新任务或推进下一轮目标。"
+        MajorRevision: "本轮围绕返工包生成大修返工任务。"
+      must:
+        - "必须等于 getLeaderContext.expected_action。"
+
+    file_change:
+      type: "object"
+      additionalProperties: false
+      required:
+        - "type"
+        - "target_file"
+      fields:
+        type:
+          type: "string"
+          allowed_values:
+            - "new_file"
+            - "major_revision"
+          meaning: "本轮目标文件变化类型。"
+        target_file:
+          type: "string"
+          meaning: "本轮打算新增或大修的唯一目标文件路径。"
+      must:
+        - "target_file 必须是单一 string。"
+        - "target_file 必须与 task_packet_md 中的 Target File 一致。"
+        - "target_file 必须与 review_intent_pack_md 中的 Review Target 一致。"
+      must_not:
+        - "使用 target_files 数组。"
+        - "把相关文件、阅读文件、依赖文件写入 target_file。"
+        - "为了匹配示例路径而改写真实目标文件。"
+
+    main_goal:
+      type: "string"
+      minLength: 1
+      meaning: "本轮核心目标的一句话或短段摘要。"
+      should:
+        - "说明为什么本轮选择该 target_file。"
+        - "说明本轮要推动什么结果。"
+      must_not:
+        - "写长篇项目背景。"
+        - "写完整任务包正文。"
+
+    behavior:
+      type: "object"
+      additionalProperties: false
+      required:
+        - "task_type"
+        - "operation"
+      fields:
+        task_type:
+          type: "string"
+          meaning: "本轮任务类型。"
+          examples:
+            - "spec_generation"
+            - "spec_revision"
+            - "knowledge_file_generation"
+            - "knowledge_file_revision"
+        operation:
+          type: "string"
+          meaning: "本轮操作类型。"
+          examples:
+            - "create_target_file_task"
+            - "major_revision_task"
+            - "continue_next_target_task"
+
+    boundary:
+      type: "object"
+      additionalProperties: false
+      required:
+        - "in_scope"
+        - "out_of_scope"
+      fields:
+        in_scope:
+          type: "string[]"
+          meaning: "本轮允许做什么。"
+        out_of_scope:
+          type: "string[]"
+          meaning: "本轮不允许做什么。"
+      should:
+        - "保持简短。"
+        - "与 task_packet_md 的 Scope Boundary 保持一致。"
+      must_not:
+        - "写 Gateway 内部实现。"
+        - "写 routing、next_actor、lock 或 status。"
+
+    dependencies:
+      type: "object"
+      additionalProperties: false
+      required:
+        - "modules"
+        - "files"
+      fields:
+        modules:
+          type: "string[]"
+          meaning: "本轮相关模块名或知识域名。"
+        files:
+          type: "string[]"
+          meaning: "本轮相关依据文件路径。"
+      should:
+        - "只列本轮真正相关的模块和文件。"
+        - "保持为摘要级依赖，不替代 Reading Scope。"
+      must_not:
+        - "列出完整项目文件树。"
+        - "列出 Leader-GPT 看不到或不应依赖的内部状态文件。"
+
+    memory_note:
+      type: "object"
+      additionalProperties: false
+      required:
+        - "summary"
+        - "carry_forward"
+      fields:
+        summary:
+          type: "string"
+          minLength: 1
+          meaning: "给 durable-state 使用的本轮简短进展摘要。"
+        carry_forward:
+          type: "string[]"
+          meaning: "需要带到后续轮次的注意事项。"
+      should:
+        - "只写本轮对后续决策有帮助的语义摘要。"
+        - "避免重复 task_packet_md 全文。"
+      must_not:
+        - "写私有推理过程。"
+        - "写 Gateway 内部实现。"
+        - "写其他 Agent 的内部状态。"
+
+action_pairing_policy:
+  source_of_truth:
+    - "getLeaderContext.expected_action"
+
+  when_expected_action_is_Create:
+    must:
+      - "leader_work_summary_json.action = Create"
+      - "leader_work_summary_json.file_change.type = new_file"
+    should:
+      - "target_file 指向本轮新建或继续推进的目标文件。"
+
+  when_expected_action_is_MajorRevision:
+    must:
+      - "leader_work_summary_json.action = MajorRevision"
+      - "leader_work_summary_json.file_change.type = major_revision"
+    should:
+      - "target_file 优先使用 context.current_state.previous_target.target_file。"
+
+  bad_pairings:
+    fail_when:
+      - "action = Create 且 file_change.type = major_revision"
+      - "action = MajorRevision 且 file_change.type = new_file"
+
+target_file_policy:
+  meaning:
+    - "target_file 是本轮唯一目标文件。"
+    - "target_file 应使用本轮真实目标路径。"
+
+  compatible_paths:
+    - ".kiro/specs/<spec-name>/<file>.md"
+    - "docs/**/*.md"
+    - "其他 Gateway 明确接受的 Markdown 目标路径"
+
+  must:
+    - "与 task_packet_md 中的 Target File 一致。"
+    - "与 review_intent_pack_md 中的 Review Target 一致。"
+
+  must_not:
+    - "使用数组。"
+    - "写相关文件。"
+    - "写参考文件。"
+    - "写阅读范围文件。"
+    - "把 target_file 改写成与本轮真实目标不一致的示例路径。"
+
+commit_payload_position:
+  leader_work_summary_json:
+    must:
+      - "作为 commitLeaderArtifacts requestBody 的 leader_work_summary_json 字段值提交。"
+      - "必须是 JSON object。"
+    must_not:
+      - "写成 Markdown。"
+      - "写成 JSON string。"
+      - "包裹在代码块中提交。"
+      - "添加 schema 外字段。"
+
+valid_minimal_example:
+  schema_version: "1.0"
+  action: "Create"
+  file_change:
+    type: "new_file"
+    target_file: ".kiro/specs/low-risk-base-framework/design.md"
+  main_goal: "生成 low-risk-base-framework Spec 的 design.md 任务规划。"
+  behavior:
+    task_type: "spec_generation"
+    operation: "create_target_file_task"
+  boundary:
+    in_scope:
+      - "生成 KiroPrompt-GPT 任务包。"
+      - "生成 Review-GPT 审查意图包。"
+      - "保持本轮目标文件边界。"
+    out_of_scope:
+      - "不写实现代码。"
+      - "不生成 routing、next_actor、lock 或 status。"
+      - "不直接修改状态层文件。"
+  dependencies:
+    modules:
+      - "low-risk-base-framework"
+    files:
+      - "current-specs-completion-direction.yaml"
+      - "kiro-specs-definition.yaml"
+      - "KB-source-distillation.yaml"
+      - "KB-module-knowledge-graph.yaml"
+  memory_note:
+    summary: "本轮选择 low-risk-base-framework/design.md 作为第一轮低风险底层框架设计目标。"
+    carry_forward:
+      - "后续继续保持 design.md → requirements.md → tasks.md 的 Spec 顺序。"
+      - "后续任务继续保持单一 target_file。"
+
+invalid_examples:
+  extra_fields:
+    reason: "出现 schema 外字段。"
+    example:
+      schema_version: "1.0"
+      action: "Create"
+      round_id: 1
+      target_file: ".kiro/specs/example/design.md"
+
+  action_mismatch:
+    reason: "action 与 file_change.type 配对错误。"
+    example:
+      schema_version: "1.0"
+      action: "Create"
+      file_change:
+        type: "major_revision"
+        target_file: ".kiro/specs/example/design.md"
+
+  stringified_json:
+    reason: "leader_work_summary_json 不得是 JSON 字符串。"
+    example: "{ \"schema_version\": \"1.0\", \"action\": \"Create\" }"
+
+pass_when:
+  - "schema_version = 1.0"
+  - "action 等于 getLeaderContext.expected_action"
+  - "file_change.type 与 action 配对正确"
+  - "file_change.target_file 是单一 string"
+  - "target_file 与 task_packet_md / review_intent_pack_md 一致"
+  - "main_goal 非空"
+  - "behavior.task_type 非空"
+  - "behavior.operation 非空"
+  - "boundary.in_scope 是 string[]"
+  - "boundary.out_of_scope 是 string[]"
+  - "dependencies.modules 是 string[]"
+  - "dependencies.files 是 string[]"
+  - "memory_note.summary 非空"
+  - "memory_note.carry_forward 是 string[]"
+  - "没有 schema 外字段"
+
+fail_when:
+  - "action 不等于 getLeaderContext.expected_action"
+  - "action 与 file_change.type 配对错误"
+  - "target_file 不是单一 string"
+  - "target_file 与 task_packet_md / review_intent_pack_md 不一致"
+  - "缺少 required field"
+  - "出现 schema 外字段"
+  - "leader_work_summary_json 是 Markdown"
+  - "leader_work_summary_json 是 JSON string"
+  - "leader_work_summary_json 包含 round_id、created_at、creator、output_artifacts、routing、next_actor、lock 或 status"
