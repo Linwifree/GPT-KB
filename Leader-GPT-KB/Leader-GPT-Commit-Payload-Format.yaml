@@ -18,6 +18,8 @@ system_facts:
       - "task_packet_md 的 Markdown 章节语义。"
       - "review_intent_pack_md 的 Markdown 章节语义。"
       - "leader_work_summary_json 的详细 schema 字段解释。"
+      - "提交前检查流程。"
+      - "mode 与 expected_action 的分支检查。"
       - "项目背景、模块边界或 Spec 生产顺序。"
 
 source_contracts:
@@ -72,7 +74,7 @@ serialization_note:
   request_transport:
     - "requestBody 是 JSON object。"
     - "两个 Markdown 字段在 JSON 传输中是 string。"
-    - "字段值解析后应呈现为多行 Markdown 正文。"
+    - "字段值解析后呈现为多行 Markdown 正文。"
 
   markdown_value_expectation:
     task_packet_md:
@@ -104,19 +106,6 @@ action_pairing:
     file_change_type: "new_file"
 
   MajorRevision:
-    file_change_type: "major_revision"
-
-mode_pairing:
-  first-round:
-    action: "Create"
-    file_change_type: "new_file"
-
-  received-summary:
-    action: "Create"
-    file_change_type: "new_file"
-
-  rework:
-    action: "MajorRevision"
     file_change_type: "major_revision"
 
 field_alignment:
@@ -151,6 +140,16 @@ json_field_shape:
       - "action 属于 Create 或 MajorRevision。"
       - "file_change.target_file 是单一 string。"
       - "file_change.type 与 action 配对一致。"
+
+valid_shape_summary:
+  - "requestBody 是 JSON object。"
+  - "requestBody 顶层字段集合为 task_packet_md、review_intent_pack_md、leader_work_summary_json。"
+  - "task_packet_md 是完整多行 Markdown string，第一行是 # KiroPrompt-GPT Task Packet。"
+  - "review_intent_pack_md 是完整多行 Markdown string，第一行是 # Review Intent Packet。"
+  - "leader_work_summary_json 是 JSON object，并符合 Leader-Work-Summary-Template.yaml。"
+  - "canonical target_file 来自 leader_work_summary_json.file_change.target_file。"
+  - "canonical action 来自 leader_work_summary_json.action。"
+  - "canonical file_change.type 来自 leader_work_summary_json.file_change.type。"
 
 valid_payload_shape:
   request_body:
@@ -196,26 +195,3 @@ valid_payload_shape:
         summary: "本轮推进 example/design.md。"
         carry_forward:
           - "后续继续保持 design.md → requirements.md → tasks.md 的 Spec 顺序。"
-
-pass_when:
-  - "requestBody 是 JSON object。"
-  - "requestBody 顶层字段集合等于 exact_top_level_fields。"
-  - "task_packet_md 是 multiline Markdown string。"
-  - "task_packet_md 第一行是 # KiroPrompt-GPT Task Packet。"
-  - "review_intent_pack_md 是 multiline Markdown string。"
-  - "review_intent_pack_md 第一行是 # Review Intent Packet。"
-  - "leader_work_summary_json 是 JSON object。"
-  - "leader_work_summary_json 符合 Leader-Work-Summary-Template.yaml。"
-  - "canonical target_file 存在且为单一 string。"
-  - "task_packet_md、review_intent_pack_md、leader_work_summary_json 的 target_file 对齐。"
-  - "action 与 file_change.type 配对一致。"
-
-fail_when:
-  - "requestBody 顶层字段集合不等于 exact_top_level_fields。"
-  - "task_packet_md 不是 multiline Markdown string。"
-  - "review_intent_pack_md 不是 multiline Markdown string。"
-  - "leader_work_summary_json 不是 JSON object。"
-  - "leader_work_summary_json 不符合 Leader-Work-Summary-Template.yaml。"
-  - "canonical target_file 缺失。"
-  - "Target File / Review Target / canonical target_file 不一致。"
-  - "action 与 file_change.type 配对不一致。"
