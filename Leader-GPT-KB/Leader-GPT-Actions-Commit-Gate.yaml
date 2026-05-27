@@ -4,48 +4,33 @@ system_facts:
     name: "Leader-GPT Actions Commit Gate"
     owner_role: "Leader-GPT"
     use_stage: "before_commitLeaderArtifacts"
-    purpose: "定义 Leader-GPT 在调用 commitLeaderArtifacts 前必须通过的 Actions requestBody 自检规则。"
+    purpose: "定义 Leader-GPT 调用 commitLeaderArtifacts 前的提交体自检规则。"
 
-  position_in_chain:
-    previous_step: "generate_task_packet_md_review_intent_pack_md_leader_work_summary_json"
-    current_step: "actions_commit_gate_check"
-    next_step: "commitLeaderArtifacts"
-
-  scope_boundary:
+  role_scope:
     owns:
-      - "检查是否已调用 getLeaderContext。"
-      - "检查 mode、input_type、expected_action 是否来自 getLeaderContext。"
-      - "检查 commitLeaderArtifacts requestBody 是否只有三个顶层字段。"
-      - "检查 task_packet_md 是否为非空 Markdown string。"
-      - "检查 review_intent_pack_md 是否为非空 Markdown string。"
-      - "检查 leader_work_summary_json 是否为 JSON object。"
-      - "检查 leader_work_summary_json 是否符合 Leader-Work-Summary-Template.yaml。"
-      - "检查 action 是否等于 expected_action。"
-      - "检查 file_change.type 是否与 action 配对。"
-      - "检查三个产物是否围绕同一个 target_file。"
-      - "检查 requestBody 不包含 Leader-GPT 不应写入的状态、路由、锁或调度字段。"
+      - "确认本轮已读取 Gateway context。"
+      - "确认 requestBody 顶层字段集合正确。"
+      - "确认 task_packet_md 是任务包 Markdown 正文。"
+      - "确认 review_intent_pack_md 是审查意图 Markdown 正文。"
+      - "确认 leader_work_summary_json 是 JSON object。"
+      - "确认三个产物围绕同一个 target_file。"
+      - "确认 action 与 file_change.type 配对正确。"
 
-    does_not_own:
-      - "不选择 target_file。"
-      - "不生成 task_packet_md 正文。"
-      - "不生成 review_intent_pack_md 正文。"
-      - "不生成 leader_work_summary_json 字段内容。"
-      - "不解释项目背景。"
-      - "不判断模块边界。"
-      - "不替代 Gateway。"
-      - "不替代任何模板文件。"
+    out_of_scope:
+      - "选择本轮 target_file。"
+      - "生成 task_packet_md 正文。"
+      - "生成 review_intent_pack_md 正文。"
+      - "生成 leader_work_summary_json 字段内容。"
+      - "定义 Markdown 正文的章节语义。"
+      - "定义 Gateway 实现细节。"
+      - "定义其他角色的系统规则。"
 
-required_upstream:
-  actions:
-    - "getLeaderContext"
-    - "commitLeaderArtifacts"
-
-  files:
-    - "Leader-GPT-Actions-Gateway-Contract.md"
-    - "Leader-Work-Summary-Template.yaml"
-    - "KiroPrompt-GPT-Task-Packet-Template.md"
-    - "Review-Intent-Packet-Template.md"
-    - "reading-layer-quantization-standard.yaml"
+source_contracts:
+  gateway_contract: "Leader-GPT-Actions-Gateway-Contract.md"
+  commit_payload_format: "Leader-GPT-Commit-Payload-Format.yaml"
+  task_packet_template: "KiroPrompt-GPT-Task-Packet-Template.md"
+  review_intent_template: "Review-Intent-Packet-Template.md"
+  work_summary_template: "Leader-Work-Summary-Template.yaml"
 
 commit_gate_contract:
   required_context_fields:
@@ -56,258 +41,265 @@ commit_gate_contract:
     - "context.current_input_md"
     - "context.optional_context"
 
-  mode_allowed_values:
+  mode_values:
     - "first-round"
     - "received-summary"
     - "rework"
 
-  input_type_allowed_values:
-    - "first-round"
-    - "received-summary"
-    - "rework"
-
-  expected_action_allowed_values:
+  expected_action_values:
     - "Create"
     - "MajorRevision"
 
-  required_request_body_fields:
-    - "task_packet_md"
-    - "review_intent_pack_md"
-    - "leader_work_summary_json"
+  request_body:
+    type: "JSON object"
+    exact_top_level_fields:
+      - "task_packet_md"
+      - "review_intent_pack_md"
+      - "leader_work_summary_json"
 
-  request_body_additional_properties: false
+  field_roles:
+    task_packet_md:
+      type: "multiline Markdown string"
+      document_role: "KiroPrompt-GPT task packet body"
+      template_source: "KiroPrompt-GPT-Task-Packet-Template.md"
 
-  forbidden_request_body_top_level_fields:
-    - "mode"
-    - "input_type"
-    - "expected_action"
-    - "round_id"
-    - "created_at"
-    - "creator"
-    - "output_artifacts"
-    - "next_actor"
-    - "routing"
-    - "routing_state"
-    - "lock"
-    - "status"
-    - "current_state"
-    - "current_input_md"
-    - "optional_context"
-    - "durable_state"
-    - "last_cycle_state"
+    review_intent_pack_md:
+      type: "multiline Markdown string"
+      document_role: "Review-GPT review intent body"
+      template_source: "Review-Intent-Packet-Template.md"
+
+    leader_work_summary_json:
+      type: "JSON object"
+      schema_source: "Leader-Work-Summary-Template.yaml"
+      canonical_source_for:
+        - "target_file"
+        - "action"
+        - "file_change.type"
+        - "dependencies"
+        - "memory_note"
 
 check_groups:
   context_acquisition_check:
-    must:
-      - "本轮已调用 getLeaderContext。"
-      - "mode 来自 getLeaderContext 返回值。"
-      - "input_type 来自 getLeaderContext 返回值。"
-      - "expected_action 来自 getLeaderContext 返回值。"
-      - "已读取 context.current_state。"
-      - "已读取 context.current_input_md。"
-      - "已读取 context.optional_context。"
+    required:
+      - "本轮已获得 getLeaderContext 返回值。"
+      - "mode 来自 getLeaderContext.mode。"
+      - "input_type 来自 getLeaderContext.input_type。"
+      - "expected_action 来自 getLeaderContext.expected_action。"
+      - "context.current_state 已读取。"
+      - "context.current_input_md 已读取。"
+      - "context.optional_context 已读取。"
+
+    pass_when:
+      - "required_context_fields 全部可用。"
+      - "mode 属于 mode_values。"
+      - "expected_action 属于 expected_action_values。"
 
     fail_when:
-      - "未调用 getLeaderContext。"
-      - "mode 是自行推断的。"
-      - "input_type 是自行推断的。"
-      - "expected_action 是自行推断的。"
-      - "缺少 context.current_state。"
-      - "缺少 context.current_input_md。"
-      - "缺少 context.optional_context。"
-
-  mode_action_check:
-    must:
-      - "leader_work_summary_json.action 必须等于 expected_action。"
-      - "mode = first-round 时，expected_action 必须为 Create。"
-      - "mode = received-summary 时，expected_action 必须为 Create。"
-      - "mode = rework 时，expected_action 必须为 MajorRevision。"
-
-    fail_when:
-      - "leader_work_summary_json.action 不等于 expected_action。"
-      - "mode = first-round 但 leader_work_summary_json.action = MajorRevision。"
-      - "mode = received-summary 但 leader_work_summary_json.action = MajorRevision。"
-      - "mode = rework 但 leader_work_summary_json.action = Create。"
+      - "required_context_fields 缺项。"
+      - "mode 不属于 mode_values。"
+      - "expected_action 不属于 expected_action_values。"
 
   request_body_shape_check:
-    must:
-      - "commitLeaderArtifacts requestBody 必须是 JSON object。"
-      - "requestBody 必须包含 task_packet_md。"
-      - "requestBody 必须包含 review_intent_pack_md。"
-      - "requestBody 必须包含 leader_work_summary_json。"
-      - "requestBody 只能包含 required_request_body_fields 中定义的三个顶层字段。"
+    required:
+      - "requestBody 是 JSON object。"
+      - "requestBody 顶层字段集合等于 exact_top_level_fields。"
+      - "task_packet_md 字段存在。"
+      - "review_intent_pack_md 字段存在。"
+      - "leader_work_summary_json 字段存在。"
+
+    pass_when:
+      - "requestBody 顶层字段集合完整且无偏移。"
+      - "三个字段分别对应 field_roles 中定义的类型。"
 
     fail_when:
-      - "requestBody 不是 JSON object。"
-      - "缺少 task_packet_md。"
-      - "缺少 review_intent_pack_md。"
-      - "缺少 leader_work_summary_json。"
-      - "requestBody 出现 forbidden_request_body_top_level_fields 中任一字段。"
-      - "requestBody 出现任何额外顶层字段。"
+      - "requestBody 类型异常。"
+      - "requestBody 顶层字段集合与 exact_top_level_fields 不一致。"
+      - "task_packet_md 字段缺项。"
+      - "review_intent_pack_md 字段缺项。"
+      - "leader_work_summary_json 字段缺项。"
 
   task_packet_md_check:
-    must:
-      - "task_packet_md 必须是非空 Markdown string。"
-      - "task_packet_md 必须明确本轮唯一 target_file。"
-      - "task_packet_md 必须明确 file_context。"
-      - "task_packet_md 必须明确 Task Intent。"
-      - "task_packet_md 必须明确 Scope Boundary。"
-      - "task_packet_md 的 Reading Scope 中每个列出的文件都必须使用 R? + D? 标注。"
-      - "task_packet_md 必须明确 Expansion Permission。"
-      - "task_packet_md 必须明确 Expected Output。"
+    required:
+      - "task_packet_md 是 multiline Markdown string。"
+      - "task_packet_md 字段值是完整任务包正文。"
+      - "task_packet_md 第一行是 `# KiroPrompt-GPT Task Packet`。"
+      - "task_packet_md 保留 Markdown 标题、列表项和段落的真实换行。"
+      - "task_packet_md 使用 KiroPrompt-GPT-Task-Packet-Template.md 定义的正文结构。"
+      - "task_packet_md 包含唯一 Target File。"
+      - "task_packet_md 的 Target File 与 canonical target_file 一致。"
+      - "task_packet_md 的 Reading Scope 文件使用 R? + D? 标注。"
+      - "task_packet_md 正文聚焦给 KiroPrompt-GPT 的任务包。"
 
-    must_not:
-      - "写 Gateway 内部实现细节。"
-      - "要求 KiroPrompt-GPT 修改状态层。"
-      - "写 routing、next_actor、lock 或 status。"
-      - "定义 Review-GPT 的完整审查制度。"
+    pass_when:
+      - "task_packet_md 可作为 task-packet.md 正文。"
+      - "task_packet_md 第一行符合模板标题。"
+      - "task_packet_md Target File 与 canonical target_file 一致。"
+      - "task_packet_md 正文职责与 task_packet_template 一致。"
 
     fail_when:
-      - "task_packet_md 为空。"
-      - "task_packet_md 缺少唯一 target_file。"
-      - "task_packet_md 把多个目标文件当作本轮直接工作单位。"
-      - "Reading Scope 存在未标注 R? + D? 的文件。"
-      - "task_packet_md 写入 routing、next_actor、lock 或 status。"
+      - "task_packet_md 类型异常。"
+      - "task_packet_md 第一行与模板标题不一致。"
+      - "task_packet_md 正文结构与 task_packet_template 不一致。"
+      - "task_packet_md Target File 缺项。"
+      - "task_packet_md 出现多个直接 Target File。"
+      - "task_packet_md Target File 与 canonical target_file 不一致。"
+      - "task_packet_md Reading Scope 标注缺项。"
+      - "task_packet_md 正文职责偏移。"
 
   review_intent_pack_md_check:
-    must:
-      - "review_intent_pack_md 必须是非空 Markdown string。"
-      - "review_intent_pack_md 必须围绕本轮 target_file 表达审查意图。"
-      - "review_intent_pack_md 必须明确 Leader Intent。"
-      - "review_intent_pack_md 必须明确 Expected Alignment。"
-      - "review_intent_pack_md 必须明确 Review Focus。"
-      - "review_intent_pack_md 必须明确 Do Not Overreview。"
-      - "如果 Optional Reading Scope 列出文件，则每个文件都必须使用 R? + D? 标注。"
+    required:
+      - "review_intent_pack_md 是 multiline Markdown string。"
+      - "review_intent_pack_md 字段值是完整审查意图正文。"
+      - "review_intent_pack_md 第一行是 `# Review Intent Packet`。"
+      - "review_intent_pack_md 保留 Markdown 标题、列表项和段落的真实换行。"
+      - "review_intent_pack_md 使用 Review-Intent-Packet-Template.md 定义的正文结构。"
+      - "review_intent_pack_md 包含唯一 Review Target。"
+      - "review_intent_pack_md 的 Review Target 与 canonical target_file 一致。"
+      - "review_intent_pack_md 的 Optional Reading Scope 如列文件，则使用 R? + D? 标注。"
+      - "review_intent_pack_md 正文聚焦给 Review-GPT 的审查意图。"
 
-    must_not:
-      - "写 KiroPrompt-GPT 的任务执行细节。"
-      - "定义 Review-GPT 的完整系统提示词。"
-      - "让 Review-GPT 决定 routing、next_actor 或状态层写入。"
-      - "要求 Review-GPT 依赖 Leader-GPT 私有状态。"
+    pass_when:
+      - "review_intent_pack_md 可作为 review-intent-pack.md 正文。"
+      - "review_intent_pack_md 第一行符合模板标题。"
+      - "review_intent_pack_md Review Target 与 canonical target_file 一致。"
+      - "review_intent_pack_md 正文职责与 review_intent_template 一致。"
 
     fail_when:
-      - "review_intent_pack_md 为空。"
-      - "review_intent_pack_md 没有围绕本轮 target_file。"
-      - "Optional Reading Scope 存在未标注 R? + D? 的文件。"
-      - "review_intent_pack_md 写入 routing、next_actor、lock 或 status。"
+      - "review_intent_pack_md 类型异常。"
+      - "review_intent_pack_md 第一行与模板标题不一致。"
+      - "review_intent_pack_md 正文结构与 review_intent_template 不一致。"
+      - "review_intent_pack_md Review Target 缺项。"
+      - "review_intent_pack_md 出现多个直接 Review Target。"
+      - "review_intent_pack_md Review Target 与 canonical target_file 不一致。"
+      - "review_intent_pack_md Optional Reading Scope 标注缺项。"
+      - "review_intent_pack_md 正文职责偏移。"
 
   leader_work_summary_json_check:
-    must:
-      - "leader_work_summary_json 必须是 JSON object。"
-      - "leader_work_summary_json.schema_version 必须为 1.0。"
-      - "leader_work_summary_json.action 必须等于 expected_action。"
-      - "leader_work_summary_json.file_change.type 必须与 action 配对。"
-      - "leader_work_summary_json.file_change.target_file 必须是单一 string。"
-      - "leader_work_summary_json.main_goal 必须非空。"
-      - "leader_work_summary_json.behavior.task_type 必须非空。"
-      - "leader_work_summary_json.behavior.operation 必须非空。"
-      - "leader_work_summary_json.boundary.in_scope 必须是 string[]。"
-      - "leader_work_summary_json.boundary.out_of_scope 必须是 string[]。"
-      - "leader_work_summary_json.dependencies.modules 必须是 string[]。"
-      - "leader_work_summary_json.dependencies.files 必须是 string[]。"
-      - "leader_work_summary_json.memory_note.summary 必须非空。"
-      - "leader_work_summary_json.memory_note.carry_forward 必须是 string[]。"
-      - "leader_work_summary_json 不得包含 Leader-Work-Summary-Template.yaml 未定义字段。"
+    required:
+      - "leader_work_summary_json 是 JSON object。"
+      - "leader_work_summary_json.schema_version = 1.0。"
+      - "leader_work_summary_json.action 属于 expected_action_values。"
+      - "leader_work_summary_json.action 等于 expected_action。"
+      - "leader_work_summary_json.file_change.type 与 action 配对。"
+      - "leader_work_summary_json.file_change.target_file 是单一 string。"
+      - "leader_work_summary_json.main_goal 非空。"
+      - "leader_work_summary_json.behavior.task_type 非空。"
+      - "leader_work_summary_json.behavior.operation 非空。"
+      - "leader_work_summary_json.boundary.in_scope 是 string[]。"
+      - "leader_work_summary_json.boundary.out_of_scope 是 string[]。"
+      - "leader_work_summary_json.dependencies.modules 是 string[]。"
+      - "leader_work_summary_json.dependencies.files 是 string[]。"
+      - "leader_work_summary_json.memory_note.summary 非空。"
+      - "leader_work_summary_json.memory_note.carry_forward 是 string[]。"
+      - "leader_work_summary_json 字段集合符合 Leader-Work-Summary-Template.yaml。"
 
-    must_not:
-      - "写成 Markdown。"
-      - "写成 JSON string。"
-      - "添加 round_id。"
-      - "添加 created_at。"
-      - "添加 creator。"
-      - "添加 output_artifacts。"
-      - "添加 routing、next_actor、lock 或 status。"
-      - "添加 current_state、current_input_md、durable_state 或 last_cycle_state。"
+    pass_when:
+      - "leader_work_summary_json 符合 work_summary_template。"
+      - "leader_work_summary_json.action 与 expected_action 一致。"
+      - "leader_work_summary_json.file_change.type 与 action 配对正确。"
+      - "leader_work_summary_json.file_change.target_file 可作为 canonical target_file。"
 
     fail_when:
-      - "leader_work_summary_json 不是 JSON object。"
-      - "leader_work_summary_json 是 JSON string。"
-      - "缺少 LeaderWorkSummary required 字段。"
-      - "出现 schema 外字段。"
-      - "action 不等于 expected_action。"
-      - "action 与 file_change.type 配对错误。"
-      - "target_file 不是单一 string。"
+      - "leader_work_summary_json 类型异常。"
+      - "leader_work_summary_json required 字段缺项。"
+      - "leader_work_summary_json 字段集合与 work_summary_template 不一致。"
+      - "leader_work_summary_json.action 与 expected_action 不一致。"
+      - "leader_work_summary_json.file_change.type 与 action 配对异常。"
+      - "leader_work_summary_json.file_change.target_file 类型异常。"
 
-  target_file_alignment_check:
-    must:
-      - "task_packet_md 的 Target File 必须与 leader_work_summary_json.file_change.target_file 一致。"
-      - "review_intent_pack_md 的 Review Target 必须与 leader_work_summary_json.file_change.target_file 一致。"
-      - "三个产物必须围绕同一个 target_file。"
-      - "rework 模式下，target_file 应优先使用 context.current_state.previous_target.target_file。"
+  mode_action_alignment_check:
+    canonical_pairs:
+      first-round:
+        expected_action: "Create"
+        file_change_type: "new_file"
 
-    fail_when:
-      - "task_packet_md Target File 与 leader_work_summary_json.file_change.target_file 不一致。"
-      - "review_intent_pack_md Review Target 与 leader_work_summary_json.file_change.target_file 不一致。"
-      - "三个产物看起来属于不同目标文件。"
-      - "rework 模式下忽略 previous_target 并选择无关新目标。"
+      received-summary:
+        expected_action: "Create"
+        file_change_type: "new_file"
 
-  forbidden_visibility_check:
-    must_not:
-      - "在任一产物中要求读取任意本地文件。"
-      - "在任一产物中要求写入状态层文件。"
-      - "在任一产物中要求写入 current-state.json。"
-      - "在任一产物中要求写入 durable-state.json。"
-      - "在任一产物中要求写 routing、lock、status 或 next_actor。"
-      - "在任一产物中描述其他 Agent 的内部状态。"
-      - "在任一产物中请求未暴露的 Action。"
+      rework:
+        expected_action: "MajorRevision"
+        file_change_type: "major_revision"
+
+    required:
+      - "mode 与 expected_action 符合 canonical_pairs。"
+      - "leader_work_summary_json.file_change.type 与 canonical_pairs 当前分支一致。"
+
+    pass_when:
+      - "mode、expected_action、file_change.type 三者配对一致。"
 
     fail_when:
-      - "产物要求绕过 Gateway。"
-      - "产物要求直接修改状态层。"
-      - "产物要求请求额外上下文。"
-      - "产物要求决定 next_actor。"
-      - "产物依赖 Leader-GPT 不可见的内部状态。"
+      - "mode 与 expected_action 配对异常。"
+      - "expected_action 与 file_change.type 配对异常。"
 
-  chat_output_check:
-    must:
-      - "commitLeaderArtifacts 成功后，聊天中只返回极简提交结果。"
+  cross_artifact_alignment_check:
+    canonical_values:
+      target_file: "leader_work_summary_json.file_change.target_file"
+      action: "leader_work_summary_json.action"
+      file_change_type: "leader_work_summary_json.file_change.type"
 
-    should:
-      - "成功时可说明 Gateway accepted=true。"
-      - "成功时可简要列出 stored_files。"
-      - "失败时说明 Gateway error 和 message。"
+    required:
+      - "task_packet_md 的 Target File 与 canonical target_file 一致。"
+      - "review_intent_pack_md 的 Review Target 与 canonical target_file 一致。"
+      - "task_packet_md 的 Expected Action 与 canonical action 一致。"
+      - "review_intent_pack_md 的 Expected Action 与 canonical action 一致。"
+      - "三个产物表达同一轮任务。"
 
-    must_not:
-      - "成功提交后在聊天中完整贴出 task_packet_md。"
-      - "成功提交后在聊天中完整贴出 review_intent_pack_md。"
-      - "成功提交后在聊天中完整贴出 leader_work_summary_json。"
-      - "把聊天输出当作正式产物入口。"
+    pass_when:
+      - "Target File / Review Target / canonical target_file 一致。"
+      - "两个 Markdown 正文中的 Expected Action 与 canonical action 一致。"
+      - "三个产物语义属于同一 target_file。"
+
+    fail_when:
+      - "Target File 与 canonical target_file 不一致。"
+      - "Review Target 与 canonical target_file 不一致。"
+      - "Expected Action 与 canonical action 不一致。"
+      - "三个产物语义分叉。"
+
+  artifact_role_check:
+    required:
+      - "task_packet_md 承载 KiroPrompt-GPT 任务包正文。"
+      - "review_intent_pack_md 承载 Review-GPT 审查意图正文。"
+      - "leader_work_summary_json 承载机器可读摘要。"
+
+    pass_when:
+      - "三个产物职责清晰。"
+      - "Markdown 正文与各自模板职责一致。"
+      - "机器可读字段位于 leader_work_summary_json。"
+
+    fail_when:
+      - "task_packet_md 职责偏移。"
+      - "review_intent_pack_md 职责偏移。"
+      - "leader_work_summary_json 不是机器可读摘要对象。"
+      - "机器可读主事实分散到多个产物中。"
 
 pass_when:
-  - "已调用 getLeaderContext。"
-  - "mode、input_type、expected_action 来自 getLeaderContext。"
-  - "requestBody 只包含 task_packet_md、review_intent_pack_md、leader_work_summary_json。"
-  - "task_packet_md 是非空 Markdown string。"
-  - "review_intent_pack_md 是非空 Markdown string。"
-  - "leader_work_summary_json 是 JSON object。"
-  - "leader_work_summary_json 符合 Leader-Work-Summary-Template.yaml。"
+  - "getLeaderContext 返回的 required_context_fields 全部可用。"
+  - "requestBody 顶层字段集合等于 exact_top_level_fields。"
+  - "task_packet_md 是完整任务包 Markdown 正文。"
+  - "review_intent_pack_md 是完整审查意图 Markdown 正文。"
+  - "leader_work_summary_json 是符合模板的 JSON object。"
   - "leader_work_summary_json.action 等于 expected_action。"
-  - "file_change.type 与 action 配对正确。"
-  - "三个产物围绕同一个 target_file。"
-  - "requestBody 不包含 forbidden_request_body_top_level_fields。"
-  - "任一产物都没有要求绕过 Gateway 或直接写状态层。"
+  - "leader_work_summary_json.file_change.type 与 action 配对正确。"
+  - "leader_work_summary_json.file_change.target_file 是 canonical target_file。"
+  - "task_packet_md 的 Target File 与 canonical target_file 一致。"
+  - "review_intent_pack_md 的 Review Target 与 canonical target_file 一致。"
+  - "三个产物职责清晰且属于同一轮任务。"
 
 fail_when:
-  - "未调用 getLeaderContext。"
-  - "expected_action 不是来自 getLeaderContext。"
-  - "requestBody 缺少任一必需顶层字段。"
-  - "requestBody 出现额外顶层字段。"
-  - "task_packet_md 为空。"
-  - "review_intent_pack_md 为空。"
-  - "leader_work_summary_json 不是 JSON object。"
-  - "leader_work_summary_json.action 不等于 expected_action。"
-  - "file_change.type 与 action 配对错误。"
-  - "target_file 不一致。"
-  - "Reading Scope 缺少 R? + D? 标注。"
-  - "产物要求 routing、next_actor、lock、status。"
-  - "产物要求直接写 current-state.json 或 durable-state.json。"
-  - "产物请求未暴露 Action。"
-  - "产物绕过 Gateway。"
+  - "context 缺项。"
+  - "requestBody 形态异常。"
+  - "task_packet_md 形态异常。"
+  - "review_intent_pack_md 形态异常。"
+  - "leader_work_summary_json 形态异常。"
+  - "mode、expected_action、file_change.type 配对异常。"
+  - "Target File / Review Target / canonical target_file 对齐异常。"
+  - "产物职责偏移。"
 
 stop_when_failed:
-  - "不得调用 commitLeaderArtifacts。"
-  - "先定位失败检查项。"
-  - "修正 requestBody 或产物内容。"
+  - "停止调用 commitLeaderArtifacts。"
+  - "定位失败 check_group。"
+  - "修正对应产物或 requestBody。"
   - "重新执行 Actions Commit Gate。"
 
 commit_permission:
@@ -317,25 +309,18 @@ commit_permission:
 
   block_commit_when:
     - "任一 fail_when 被触发。"
-    - "无法确认 leader_work_summary_json.action 是否等于 expected_action。"
-    - "无法确认 requestBody 是否只有三个顶层字段。"
-    - "无法确认三个产物是否围绕同一个 target_file。"
-    - "无法确认 leader_work_summary_json 是否为 JSON object。"
+    - "无法确认 canonical target_file。"
+    - "无法确认 expected_action 与 action 一致。"
+    - "无法确认三个产物属于同一轮任务。"
 
 after_commit_response_policy:
   if_gateway_accepted_true:
     chat_response:
       - "返回极简成功回执。"
-      - "可列出 Gateway 返回的 stored_files。"
-    must_not:
-      - "重复粘贴完整产物正文。"
+      - "可简要说明本轮三个产物已提交。"
 
   if_gateway_accepted_false:
     chat_response:
-      - "报告 Gateway error。"
-      - "报告 Gateway message。"
-      - "如果错误可由 schema/action/path 修正，修正后重新执行 commit gate。"
-    must_not:
-      - "绕过 Gateway。"
-      - "请求未暴露 Action。"
-      - "直接写状态层。"
+      - "报告 Gateway 返回的 error。"
+      - "报告 Gateway 返回的 message。"
+      - "根据错误所属字段修正后重新执行 commit gate。"
