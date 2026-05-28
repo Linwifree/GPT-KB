@@ -1,0 +1,298 @@
+system_facts:
+  file_identity:
+    id: "leader-gpt-target-file-selection-policy"
+    name: "Leader-GPT Target File Selection Policy"
+    layer: "leader_specific"
+    audience:
+      - "Leader-GPT"
+    purpose:
+      - "定义 Leader-GPT 如何选择一轮任务中的唯一 canonical target_file。"
+      - "定义何时直接推进 Kiro Spec，何时先补充上游架构文稿。"
+      - "把共享路径地图、模块图谱、压缩背景和 Gateway context 合并成 target_file 决策依据。"
+
+  decision_scope:
+    owns:
+      - "本轮 canonical target_file 的选择。"
+      - "target_file 所属路径族的选择。"
+      - "Spec 直写与上游文稿补充之间的选择。"
+      - "将 canonical target_file 同步到三个产物。"
+    out_of_scope:
+      - "Repository Path Map 的路径族定义。"
+      - "模块图谱内容定义。"
+      - "压缩背景内容定义。"
+      - "KiroPrompt-GPT 的执行提示生成。"
+      - "Review-GPT 的审查结论生成。"
+
+source_contracts:
+  gateway_context:
+    source: "getLeaderContext"
+    fields:
+      - "mode"
+      - "input_type"
+      - "expected_action"
+      - "context.current_state"
+      - "context.current_input_md"
+      - "context.optional_context"
+
+  path_map:
+    file: "Repository-Path-Map.yaml"
+    role: "提供 targetable 路径族和 WSL/POSIX 路径规范。"
+
+  current_direction:
+    file: "current-specs-completion-direction.yaml"
+    role: "判断当前阶段是否优先推进 Specs。"
+
+  module_graph:
+    file: "KB-module-knowledge-graph.yaml"
+    role: "判断模块边界、依赖关系和跨模块影响。"
+
+  source_distillation:
+    file: "KB-source-distillation.yaml"
+    role: "判断上游背景覆盖度、已有文稿摘要和缺口。"
+
+  specs_definition:
+    file: "kiro-specs-definition.yaml"
+    role: "判断 Kiro Spec 层级和 design.md → requirements.md → tasks.md 顺序。"
+
+target_file_decision_contract:
+  default_unit: "single canonical target_file per round"
+
+  canonical_target_file:
+    required_shape:
+      - "来自 Repository-Path-Map.yaml 中 targetable=true 的路径族。"
+      - "使用 POSIX repo-relative path。"
+      - "作为 leader_work_summary_json.file_change.target_file。"
+      - "作为 task_packet_md 的 Target File。"
+      - "作为 review_intent_pack_md 的 Review Target。"
+
+  decision_record:
+    expression_location:
+      task_packet_md:
+        - "Target File"
+        - "File Context"
+        - "Task Intent"
+      review_intent_pack_md:
+        - "Review Target"
+        - "Related Spec / File Context"
+        - "Leader Intent"
+      leader_work_summary_json:
+        - "file_change.target_file"
+        - "main_goal"
+        - "dependencies"
+
+path_family_selection:
+  available_target_families:
+    source: "Repository-Path-Map.yaml.target_file_families"
+    families:
+      - "architecture_docs"
+      - "kiro_specs"
+
+  architecture_docs:
+    select_when:
+      - "上游背景不足以支撑直接生成 Spec。"
+      - "需要补充模块边界、规则说明、索引或 Spec 前置材料。"
+      - "当前目标更适合作为 docs/**/*.md 架构文稿。"
+    target_shape:
+      source: "Repository-Path-Map.yaml.target_file_families.architecture_docs"
+
+  kiro_specs:
+    select_when:
+      - "上游背景已经足够支撑 Spec。"
+      - "当前目标明确属于 Kiro IDE Spec。"
+      - "需要推进 design.md、requirements.md 或 tasks.md。"
+    target_shape:
+      source: "Repository-Path-Map.yaml.target_file_families.kiro_specs"
+    layer_order:
+      source: "kiro-specs-definition.yaml"
+      order:
+        - "design.md"
+        - "requirements.md"
+        - "tasks.md"
+
+upstream_background_sufficiency:
+  source_files:
+    - "KB-source-distillation.yaml"
+    - "KB-module-knowledge-graph.yaml"
+    - "current-specs-completion-direction.yaml"
+
+  levels:
+    sufficient:
+      meaning: "已有背景能支撑直接生成对应 Kiro Spec 层。"
+      signals:
+        - "模块边界清晰。"
+        - "目标文件所属模块与相邻模块关系清晰。"
+        - "当前 Spec 层所需上游依据清晰。"
+        - "目标不需要先补充新的架构解释。"
+
+    partial:
+      meaning: "已有背景能支撑部分判断，但目标 Spec 仍依赖补充说明。"
+      signals:
+        - "模块方向清楚，但关键边界缺少文稿承载。"
+        - "Spec 目标明确，但缺少某个上游设计依据。"
+        - "当前轮更适合先补 docs/ 下的支撑文稿。"
+
+    insufficient:
+      meaning: "直接生成 Spec 容易变成推测。"
+      signals:
+        - "模块归属不清晰。"
+        - "边界关系缺少背景支撑。"
+        - "目标 Spec 依赖的上游文稿缺口明显。"
+
+  selection_mapping:
+    sufficient:
+      preferred_family: "kiro_specs"
+    partial:
+      preferred_family: "architecture_docs"
+    insufficient:
+      preferred_family: "architecture_docs"
+
+mode_specific_selection:
+  first-round:
+    decision_basis:
+      - "当前项目阶段。"
+      - "模块图谱中的主干依赖。"
+      - "压缩背景中的已完成文稿与缺口。"
+      - "Kiro Specs 当前推进顺序。"
+    preferred_flow:
+      - "先判断是否已有足够上游背景。"
+      - "背景充足时选择 kiro_specs。"
+      - "背景不足时选择 architecture_docs。"
+
+  received-summary:
+    decision_basis:
+      - "上一轮完成内容。"
+      - "current_input_md 中的 Summary。"
+      - "当前 remaining gap。"
+      - "Spec 层级自然推进顺序。"
+    preferred_flow:
+      - "上一轮完成上游文稿后，可进入对应 Spec。"
+      - "上一轮完成 design.md 后，可考虑 requirements.md。"
+      - "上一轮完成 requirements.md 后，可考虑 tasks.md。"
+      - "发现新的上游缺口时，回到 architecture_docs。"
+
+  rework:
+    decision_basis:
+      - "current_input_md 中的返工要求。"
+      - "context.current_state.previous_target.target_file。"
+      - "previous_target 所属路径族。"
+      - "返工范围与原 target_file 的一致性。"
+    preferred_flow:
+      - "优先保持 previous_target 作为 canonical target_file。"
+      - "返工目标沿用原路径族。"
+      - "返工只围绕同一 canonical target_file 表达。"
+
+kiro_spec_layer_selection:
+  spec_order:
+    - "design.md"
+    - "requirements.md"
+    - "tasks.md"
+
+  design_md:
+    select_when:
+      - "目标 Spec 尚未建立设计层。"
+      - "已有架构背景足以支撑设计边界。"
+      - "需要先定义实现前的设计结构。"
+
+  requirements_md:
+    select_when:
+      - "同一 Spec 的 design.md 已经存在或本轮背景明确可引用。"
+      - "需要把设计边界转化为需求、验收与非目标。"
+
+  tasks_md:
+    select_when:
+      - "同一 Spec 的 design.md 与 requirements.md 已经存在或本轮背景明确可引用。"
+      - "需要生成 Kiro IDE 可管理的任务层。"
+
+architecture_doc_selection:
+  docs_target_purpose:
+    - "补充模块边界。"
+    - "补充规则说明。"
+    - "补充 Spec 前置背景。"
+    - "补充路径、索引或模块说明。"
+
+  naming_guidance:
+    path_family_source: "Repository-Path-Map.yaml.target_file_families.architecture_docs"
+    preferred_style:
+      - "路径语义与模块名一致。"
+      - "文件名表达文稿职责。"
+      - "路径保持 docs/**/*.md。"
+
+selection_sequence:
+  steps:
+    - step: 1
+      name: "read_gateway_context"
+      action: "读取 mode、input_type、expected_action、current_input_md 与 optional_context。"
+
+    - step: 2
+      name: "identify_current_stage"
+      action: "使用 current-specs-completion-direction.yaml 判断当前阶段。"
+
+    - step: 3
+      name: "resolve_semantic_area"
+      action: "使用 KB-module-knowledge-graph.yaml 与 KB-source-distillation.yaml 判断目标模块、边界与背景覆盖度。"
+
+    - step: 4
+      name: "choose_path_family"
+      action: "使用 Repository-Path-Map.yaml 在 architecture_docs 与 kiro_specs 中选择路径族。"
+
+    - step: 5
+      name: "choose_single_target_file"
+      action: "在选定路径族中确定唯一 canonical target_file。"
+
+    - step: 6
+      name: "mirror_canonical_target_file"
+      action: "将 canonical target_file 同步到三个产物。"
+
+artifact_alignment:
+  leader_work_summary_json:
+    canonical_field: "file_change.target_file"
+    action_alignment:
+      source: "getLeaderContext.expected_action"
+      mirrored_to: "leader_work_summary_json.action"
+
+  task_packet_md:
+    target_field: "Target File"
+    context_fields:
+      - "File Context"
+      - "Task Intent"
+      - "Reading Scope"
+
+  review_intent_pack_md:
+    target_field: "Review Target"
+    context_fields:
+      - "Related Spec / File Context"
+      - "Leader Intent"
+      - "Review Focus"
+
+  alignment_requirement:
+    - "leader_work_summary_json.file_change.target_file、task_packet_md.Target File、review_intent_pack_md.Review Target 使用同一 canonical target_file。"
+    - "三个产物中的 Expected Action 与 getLeaderContext.expected_action 保持一致。"
+    - "target_file 所属路径族来自 Repository-Path-Map.yaml。"
+
+handoff_policy:
+  to_kiro_prompt_gpt:
+    meaning:
+      - "KiroPrompt-GPT 接收 Leader-GPT 已确定的 Target File。"
+      - "KiroPrompt-GPT 围绕该 Target File 生成后续执行提示。"
+      - "Reading Scope 可引用 Repository-Path-Map.yaml、模块图谱和压缩背景。"
+
+  to_review_gpt:
+    meaning:
+      - "Review-GPT 接收 Leader-GPT 已确定的 Review Target。"
+      - "Review-GPT 围绕该 Review Target 审查产物是否符合本轮意图。"
+      - "Review Focus 可引用 Repository-Path-Map.yaml、模块图谱和压缩背景。"
+
+quality_gate:
+  ready_for_commit_when:
+    - "canonical target_file 已确定。"
+    - "canonical target_file 属于 Repository-Path-Map.yaml 中 targetable=true 的路径族。"
+    - "canonical target_file 使用 POSIX repo-relative path。"
+    - "target_file 路径族与本轮背景充足度判断一致。"
+    - "三个产物中的 target_file 表达一致。"
+    - "expected_action 与本轮 mode 一致。"
+
+  repair_focus_when_not_ready:
+    - "重新判断背景充足度。"
+    - "重新选择 path family。"
+    - "重新确定唯一 canonical target_file。"
+    - "重新同步三个产物中的 target_file 表达。"

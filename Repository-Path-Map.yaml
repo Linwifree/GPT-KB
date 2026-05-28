@@ -1,0 +1,189 @@
+system_facts:
+  file_identity:
+    id: "repository-path-map"
+    name: "Repository Path Map"
+    layer: "project_background"
+    audience:
+      - "Leader-GPT"
+      - "KiroPrompt-GPT"
+      - "Review-GPT"
+    purpose:
+      - "定义项目仓库中的主要路径族。"
+      - "定义 Agent 可引用的路径写法。"
+      - "连接路径、模块图谱与压缩背景。"
+      - "支持 target_file、Reading Scope、Review Target 的稳定路径表达。"
+
+  repository_context:
+    repository_role: "architecture_and_specs_repository"
+    runtime_environment: "WSL"
+    canonical_path_style: "POSIX repo-relative path"
+    target_file_value_style: "repo-relative path only"
+
+source_links:
+  module_graph:
+    file: "KB-module-knowledge-graph.yaml"
+    role: "模块关系、模块边界、依赖方向与跨模块影响判断。"
+
+  source_distillation:
+    file: "KB-source-distillation.yaml"
+    role: "压缩后的项目背景、模块摘要、已有文稿覆盖度与上下文依据。"
+
+  specs_definition:
+    file: "kiro-specs-definition.yaml"
+    role: "Kiro Specs 的 design.md → requirements.md → tasks.md 三层定义。"
+
+  current_direction:
+    file: "current-specs-completion-direction.yaml"
+    role: "当前阶段是否优先推进 Specs、是否需要补充上游文稿。"
+
+path_style_policy:
+  accepted_path_shape:
+    repo_relative: true
+    separator: "/"
+    absolute_path: "absent"
+    windows_drive: "absent"
+    backslash: "absent"
+    parent_directory_segment: "absent"
+    primary_document_extension: ".md"
+
+  environment_notes:
+    - "target_file、Reading Scope、Review Target 使用仓库相对路径。"
+    - "本地 WSL workspace 绝对路径只属于运行环境，不写入 target_file。"
+    - "路径分隔符统一使用 `/`。"
+
+  accepted_examples:
+    architecture_docs:
+      - "docs/modules/auth/auth-boundary.md"
+      - "docs/modules/dashboard/dashboard-structure.md"
+      - "docs/specs/auth/spec-background.md"
+      - "docs/rules/security-boundary.md"
+
+    kiro_specs:
+      - ".kiro/specs/auth/design.md"
+      - ".kiro/specs/auth/requirements.md"
+      - ".kiro/specs/auth/tasks.md"
+
+target_file_families:
+  architecture_docs:
+    id: "architecture_docs"
+    root: "docs/"
+    pattern: "docs/**/*.md"
+    targetable: true
+    readable: true
+    role:
+      - "上游架构文稿。"
+      - "模块说明文稿。"
+      - "规则与边界文稿。"
+      - "Spec 前置背景文稿。"
+    use_when:
+      - "已有背景不足以直接生成 Kiro Spec。"
+      - "本轮需要补充模块边界、规则说明、索引或架构依据。"
+      - "本轮目标属于普通 Markdown 架构文稿。"
+    semantic_links:
+      graph_source: "KB-module-knowledge-graph.yaml"
+      distillation_source: "KB-source-distillation.yaml"
+      path_to_semantic_resolution:
+        - "先确认目标路径属于 docs/ 路径族。"
+        - "再用 KB-module-knowledge-graph.yaml 确认模块关系。"
+        - "再用 KB-source-distillation.yaml 确认已有背景与缺口。"
+
+  kiro_specs:
+    id: "kiro_specs"
+    root: ".kiro/specs/"
+    pattern:
+      - ".kiro/specs/<spec-name>/design.md"
+      - ".kiro/specs/<spec-name>/requirements.md"
+      - ".kiro/specs/<spec-name>/tasks.md"
+    targetable: true
+    readable: true
+    role:
+      - "Kiro IDE 原生 Specs 文件。"
+      - "可被 Kiro IDE 按 Spec 结构管理。"
+      - "tasks.md 可作为后续 Kiro IDE 原生任务执行入口。"
+    layer_order:
+      - "design.md"
+      - "requirements.md"
+      - "tasks.md"
+    use_when:
+      - "上游架构文稿已经足够支撑 Spec 生成。"
+      - "当前阶段需要推进 Kiro Spec。"
+      - "本轮目标明确属于 design.md、requirements.md 或 tasks.md。"
+    semantic_links:
+      specs_definition: "kiro-specs-definition.yaml"
+      graph_source: "KB-module-knowledge-graph.yaml"
+      distillation_source: "KB-source-distillation.yaml"
+      path_to_semantic_resolution:
+        - "先确认目标路径属于 .kiro/specs/ 路径族。"
+        - "再用 kiro-specs-definition.yaml 确认 Spec 层级。"
+        - "再用 KB-module-knowledge-graph.yaml 确认模块边界。"
+        - "再用 KB-source-distillation.yaml 确认上游背景是否足够。"
+
+readable_knowledge_files:
+  project_background_indexes:
+    readable: true
+    targetable: false
+    files:
+      - "Repository-Path-Map.yaml"
+      - "KB-module-knowledge-graph.yaml"
+      - "KB-source-distillation.yaml"
+      - "current-specs-completion-direction.yaml"
+      - "kiro-specs-definition.yaml"
+      - "reading-layer-quantization-standard.yaml"
+    role:
+      - "为 Agent 提供路径、模块、背景、阶段与阅读深度规则。"
+
+module_path_binding:
+  source_of_truth:
+    module_relations: "KB-module-knowledge-graph.yaml"
+    compressed_background: "KB-source-distillation.yaml"
+    path_families: "Repository-Path-Map.yaml"
+
+  binding_policy:
+    - "Repository-Path-Map.yaml 只定义路径族、路径用途和路径连接。"
+    - "模块依赖与模块边界以 KB-module-knowledge-graph.yaml 为准。"
+    - "背景覆盖度与文稿摘要以 KB-source-distillation.yaml 为准。"
+    - "路径选择先确认路径族，再确认模块语义，再确认背景充足度。"
+
+reading_scope_support:
+  path_selection:
+    - "Reading Scope 文件路径来自本文件定义的 readable 路径或知识文件。"
+    - "Reading Scope 的阅读深度标注来自 reading-layer-quantization-standard.yaml。"
+    - "Reading Scope 中的路径保持 POSIX repo-relative style。"
+
+  common_reading_groups:
+    for_spec_generation:
+      - "Repository-Path-Map.yaml"
+      - "kiro-specs-definition.yaml"
+      - "KB-module-knowledge-graph.yaml"
+      - "KB-source-distillation.yaml"
+      - "current-specs-completion-direction.yaml"
+
+    for_architecture_doc_completion:
+      - "Repository-Path-Map.yaml"
+      - "KB-module-knowledge-graph.yaml"
+      - "KB-source-distillation.yaml"
+      - "current-specs-completion-direction.yaml"
+
+target_file_alignment:
+  canonical_target_file:
+    meaning: "一轮任务中的唯一目标文件路径。"
+    source_in_artifacts:
+      - "leader_work_summary_json.file_change.target_file"
+      - "task_packet_md.Target File"
+      - "review_intent_pack_md.Review Target"
+    required_alignment:
+      - "三处路径表达保持一致。"
+      - "路径属于 target_file_families 中 targetable=true 的路径族。"
+      - "路径使用 POSIX repo-relative style。"
+
+gateway_policy_alignment:
+  expected_runtime_allowlist:
+    source: "Repository-Path-Map.yaml.target_file_families"
+    targetable_families:
+      - "architecture_docs"
+      - "kiro_specs"
+
+  alignment_rule:
+    - "Agent 认知层路径族与 Gateway runtime target_file allowlist 保持一致。"
+    - "Gateway 执行层负责硬校验。"
+    - "Repository-Path-Map.yaml 负责让 Agent 提前生成正确路径。"
