@@ -25,6 +25,11 @@ system_facts:
     format: "Markdown document"
     future_consumer: "Review-GPT"
 
+  gateway_schema_alignment:
+    field_type: "string"
+    minLength: 1
+    cleaned_value: "non_empty"
+
   scope_boundary:
     owns:
       - "本轮审查目标。"
@@ -41,8 +46,6 @@ system_facts:
       - "Review-GPT 的完整系统提示词。"
       - "leader_work_summary_json schema。"
       - "提交体字段形态。"
-      - "状态层元信息。"
-      - "Gateway 实现细节。"
 ```
 
 ---
@@ -66,7 +69,12 @@ document_shape:
     - "## 9. Review Result Expectation"
     - "## 10. Prohibited Review Behavior"
 
-  content_policy:
+  gateway_checked_shape:
+    - "review_intent_pack_md 字段存在。"
+    - "review_intent_pack_md 是 string。"
+    - "清洗后 review_intent_pack_md 非空。"
+
+  template_quality_shape:
     - "正文聚焦给 Review-GPT 的审查意图。"
     - "正文围绕本轮唯一 Review Target。"
     - "正文中的 Review Target 与 leader_work_summary_json.file_change.target_file 保持一致。"
@@ -117,6 +125,7 @@ section_requirements:
       - "File Operation"
     required_alignment:
       - "Review Target 是单一目标文件。"
+      - "Review Target 使用本轮 canonical target_file。"
       - "Review Target 与 leader_work_summary_json.file_change.target_file 一致。"
       - "Review Target 与 task_packet_md Target File 一致。"
       - "rework 模式下 Review Target 优先来自 context.current_state.previous_target.target_file。"
@@ -186,11 +195,11 @@ section_requirements:
   Do_Not_Overreview:
     purpose: "防止 Review-GPT 过度审查。"
     should_include:
-      - "不要把 tasks.md 审成 PR 计划。"
-      - "不要要求改变 Kiro 原生任务块格式。"
-      - "不要因为没有实现代码而判定 Spec 失败。"
-      - "不要审查本轮目标之外的内容。"
-      - "不要要求补齐未被本轮 Target File 覆盖的其他文件。"
+      - "审查范围限于本轮 Review Target。"
+      - "Kiro 原生任务块格式保持稳定。"
+      - "Spec 文稿不以实现代码是否存在作为通过前提。"
+      - "本轮目标之外的文件只作为背景，不作为审查目标。"
+      - "未被本轮 Review Target 覆盖的文件不作为补齐要求。"
 
   Optional_Reading_Scope:
     purpose: "仅在 Review-GPT 需要按需阅读时使用。"
@@ -216,7 +225,6 @@ section_requirements:
   Prohibited_Review_Behavior:
     purpose: "列出本轮不属于 Review-GPT 审查意图的内容。"
     should_include:
-      - "Gateway 实现细节。"
       - "状态层写入。"
       - "非本轮 Review Target。"
       - "KiroPrompt-GPT 完整执行提示。"
@@ -254,7 +262,7 @@ mode_specific_rules:
       - "审查大修任务是否围绕返工包。"
       - "审查 target_file 是否优先使用 previous_target.target_file。"
       - "审查是否解决返工包指出的问题。"
-      - "审查是否没有扩大返工范围。"
+      - "审查是否没有扩大大修范围。"
     expected_shape:
       - "action = MajorRevision。"
       - "file_change.type = major_revision。"
@@ -297,11 +305,11 @@ mode_specific_rules:
 - ...
 
 ## 7. Do Not Overreview
-- 不要把 tasks.md 审成 PR 计划。
-- 不要要求改变 Kiro 原生任务块格式。
-- 不要因为没有实现代码而判定 Spec 失败。
-- 不要审查本轮目标之外的内容。
-- 不要要求补齐未被本轮 Target File 覆盖的其他文件。
+- 审查范围限于本轮 Review Target。
+- Kiro 原生任务块格式保持稳定。
+- Spec 文稿不以实现代码是否存在作为通过前提。
+- 本轮目标之外的文件只作为背景，不作为审查目标。
+- 未被本轮 Review Target 覆盖的文件不作为补齐要求。
 
 ## 8. Optional Reading Scope
 - `...`: R0 + D5（用途说明）
@@ -313,7 +321,6 @@ mode_specific_rules:
 - MAJOR_REVISION:
 
 ## 10. Prohibited Review Behavior
-- Gateway 实现细节。
 - 状态层写入。
 - 非本轮 Review Target。
 - KiroPrompt-GPT 完整执行提示。
@@ -321,10 +328,15 @@ mode_specific_rules:
 
 ---
 
-## 7. Pass / Fail Gate
+## 7. Template Quality Gate
 
 ```yaml
-pass_when:
+gateway_schema_pass_when:
+  - "review_intent_pack_md 字段存在。"
+  - "review_intent_pack_md 是 string。"
+  - "清洗后 review_intent_pack_md 非空。"
+
+template_quality_pass_when:
   - "review_intent_pack_md 使用本模板定义的 Markdown 正文结构。"
   - "包含所有 required_sections。"
   - "Mode / Input Type / Expected Action 来自 getLeaderContext。"
@@ -338,13 +350,9 @@ pass_when:
   - "Optional Reading Scope 如列文件则全部有 R? + D? 标注。"
   - "正文聚焦给 Review-GPT 的审查意图。"
 
-fail_when:
-  - "缺少唯一 Review Target。"
-  - "出现多个直接 Review Target。"
-  - "Review Target 与 leader_work_summary_json.file_change.target_file 不一致。"
-  - "Review Target 与 task_packet_md Target File 不一致。"
-  - "Optional Reading Scope 出现未标注 R? + D? 的文件。"
-  - "正文混入 KiroPrompt-GPT 完整执行提示。"
-  - "正文混入 leader_work_summary_json 内容。"
-  - "正文混入 Gateway 实现细节。"
+repair_focus:
+  - "补齐 Review Target。"
+  - "统一 Review Target 与 canonical target_file。"
+  - "补齐 Optional Reading Scope 的 R? + D? 标注。"
+  - "收束正文到 Review-GPT 审查意图。"
 ```

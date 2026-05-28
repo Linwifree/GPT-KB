@@ -25,6 +25,11 @@ system_facts:
     format: "Markdown document"
     future_consumer: "KiroPrompt-GPT"
 
+  gateway_schema_alignment:
+    field_type: "string"
+    minLength: 1
+    cleaned_value: "non_empty"
+
   scope_boundary:
     owns:
       - "本轮给 KiroPrompt-GPT 的任务目标。"
@@ -40,8 +45,6 @@ system_facts:
       - "Review-GPT 审查制度。"
       - "leader_work_summary_json schema。"
       - "提交体字段形态。"
-      - "状态层元信息。"
-      - "Gateway 实现细节。"
 ```
 
 ---
@@ -65,7 +68,12 @@ document_shape:
     - "## 9. Expected Output"
     - "## 10. Prohibited Output"
 
-  content_policy:
+  gateway_checked_shape:
+    - "task_packet_md 字段存在。"
+    - "task_packet_md 是 string。"
+    - "清洗后 task_packet_md 非空。"
+
+  template_quality_shape:
     - "正文聚焦给 KiroPrompt-GPT 的任务包。"
     - "正文围绕本轮唯一 Target File。"
     - "正文中的 Target File 与 leader_work_summary_json.file_change.target_file 保持一致。"
@@ -135,6 +143,7 @@ section_requirements:
       - "File Type"
     required_alignment:
       - "Target File 是单一路径。"
+      - "Target File 使用本轮 canonical target_file。"
       - "Target File 与 leader_work_summary_json.file_change.target_file 一致。"
       - "File Operation 与 expected_action / file_change.type 语义一致。"
     file_operation_policy:
@@ -237,7 +246,6 @@ section_requirements:
       - "非本轮 Target File。"
       - "Review-GPT 审查制度。"
       - "leader_work_summary_json 内容。"
-      - "Gateway 实现细节。"
 ```
 
 ---
@@ -353,15 +361,19 @@ mode_specific_rules:
 - 非本轮 Target File。
 - Review-GPT 审查制度。
 - leader_work_summary_json 内容。
-- Gateway 实现细节。
 ```
 
 ---
 
-## 7. Pass / Fail Gate
+## 7. Template Quality Gate
 
 ```yaml
-pass_when:
+gateway_schema_pass_when:
+  - "task_packet_md 字段存在。"
+  - "task_packet_md 是 string。"
+  - "清洗后 task_packet_md 非空。"
+
+template_quality_pass_when:
   - "task_packet_md 使用本模板定义的 Markdown 正文结构。"
   - "包含所有 required_sections。"
   - "Mode / Input Type / Expected Action 来自 getLeaderContext。"
@@ -374,13 +386,9 @@ pass_when:
   - "Expansion Permission 明确且有边界。"
   - "正文聚焦给 KiroPrompt-GPT 的任务包。"
 
-fail_when:
-  - "缺少唯一 Target File。"
-  - "出现多个直接 Target File。"
-  - "Target File 与 leader_work_summary_json.file_change.target_file 不一致。"
-  - "Target File 与 review_intent_pack_md Review Target 不一致。"
-  - "Reading Scope 出现未标注 R? + D? 的文件。"
-  - "正文混入 Review-GPT 审查制度。"
-  - "正文混入 leader_work_summary_json 内容。"
-  - "正文混入 Gateway 实现细节。"
+repair_focus:
+  - "补齐 Target File。"
+  - "统一 Target File 与 canonical target_file。"
+  - "补齐 Reading Scope 的 R? + D? 标注。"
+  - "收束正文到 KiroPrompt-GPT 任务包。"
 ```
