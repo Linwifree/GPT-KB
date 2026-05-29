@@ -1,7 +1,7 @@
 knowledge_file:
   id: "current-specs-completion-direction"
   title: "Current Specs Completion Direction"
-  purpose: "为 GPT 提供当前阶段的共享方向约束：基于已有架构知识，将网站模板项目的核心 Kiro Specs 推进到 tasks.md 粒度。"
+  purpose: "为 GPT 提供当前阶段的共享方向约束：基于已有架构知识，将网站模板项目的核心 Kiro Specs 推进到 tasks.md 粒度，并在必要时补充支撑 Spec 生产的上游 docs 文稿。"
   audience: "GPT knowledge shared layer"
   language_policy:
     primary_language: "Chinese"
@@ -22,8 +22,25 @@ knowledge_file:
       - "Prisma"
       - "Auth.js"
 
+source_contracts:
+  repository_path_map:
+    file: "Repository-Path-Map.yaml"
+    role: "定义 docs 与 .kiro/specs 的路径族、WSL/POSIX 路径写法与路径语义连接。"
+
+  kiro_specs_definition:
+    file: "kiro-specs-definition.yaml"
+    role: "定义 Kiro Specs 的 design.md → requirements.md → tasks.md 三层结构和层级关系。"
+
+  module_graph:
+    file: "KB-module-knowledge-graph.yaml"
+    role: "提供模块关系、模块边界、依赖方向和跨模块影响判断。"
+
+  source_distillation:
+    file: "KB-source-distillation.yaml"
+    role: "提供压缩背景、已有文稿覆盖度和上游背景依据。"
+
 current_architecture_state:
-  summary: "当前项目已经形成商业网站底座模板的主要架构背景。已有知识覆盖项目总览、全局架构规则、测试策略、术语体系，以及 Auth / Role / Permission、Marketing、Dashboard、Admin、Extension Slot 等核心模块。这些内容已经足够作为 Kiro Specs 生产的上游输入。当前阶段不再以继续扩写背景说明为主，而是将已有架构能力转化为一组边界清晰、彼此协调、可继续施工的 Specs。"
+  summary: "当前项目已经形成商业网站底座模板的主要架构背景。已有知识覆盖项目总览、全局架构规则、测试策略、术语体系，以及 Auth / Role / Permission、Marketing、Dashboard、Admin、Extension Slot 等核心模块。这些内容总体上已经足够作为 Kiro Specs 生产的上游输入。当前阶段不再以继续扩写背景说明为主，而是将已有架构能力转化为一组边界清晰、彼此协调、可继续施工的 Specs。"
 
   status: "architecture_sources_ready_for_specs_production"
 
@@ -43,7 +60,7 @@ current_architecture_state:
     to: "Kiro Specs 生产与 tasks.md 粒度收束"
 
 current_stage_goal:
-  summary: "当前阶段要把网站模板项目需要的核心 Specs 推进到 design.md → requirements.md → tasks.md 三层结构，其中 tasks.md 是当前产物完成的关键标志。"
+  summary: "当前阶段要把网站模板项目需要的核心 Specs 推进到 design.md → requirements.md → tasks.md 三层结构，其中 tasks.md 是当前产物完成的关键标志。若某个 Spec 所需上游背景不足，可以先补充 docs 路径族下的支撑文稿，但补充文稿必须服务于具体 Spec 的完成。"
 
   must:
     - "将当前范围内的核心 Specs 推进到 design.md / requirements.md / tasks.md 三层结构。"
@@ -51,11 +68,51 @@ current_stage_goal:
     - "确保每个 Spec 的范围、需求、边界、非目标和设计假设清晰。"
     - "确保相关 Specs 在底层结构、模块边界、职责划分和主要设计假设上保持协调。"
     - "确保后续相关 Specs 能基于已定义的前置结构继续展开，而不是重复定义冲突结构。"
+    - "必要的 docs 支撑文稿应服务于具体 Spec 的推进。"
 
   should:
     - "优先基于已有架构文稿与模块边界生成 Specs。"
     - "优先推动具体 Spec 完成，而不是反复扩写背景说明。"
     - "优先让 Specs 形成可继续审查、施工和拆分的上游产物。"
+    - "当上游背景充足时，优先推进 .kiro/specs 路径族中的 Kiro Spec 文件。"
+    - "当上游背景不足时，先补充 docs 路径族中的支撑文稿。"
+
+target_file_family_direction:
+  summary: "当前阶段允许的目标文件方向分为两类：直接推进 Kiro Spec，或补充服务于 Spec 生产的 docs 支撑文稿。路径族、路径写法和 targetable 范围以 Repository-Path-Map.yaml 为准。"
+
+  source_of_path_families: "Repository-Path-Map.yaml"
+
+  architecture_docs:
+    family_id: "architecture_docs"
+    path_family: "docs/**/*.md"
+    use_when:
+      - "直接生成 Spec 所需背景不足。"
+      - "需要补充模块边界、规则说明、索引或 Spec 前置材料。"
+      - "本轮目标是普通架构文稿，而不是 Kiro IDE 原生 Spec 文件。"
+    direction:
+      - "补充文稿应服务于后续或当前具体 Spec。"
+      - "补充文稿应与模块图谱和压缩背景保持一致。"
+      - "补充文稿不应扩展成新的大范围流程设计。"
+
+  kiro_specs:
+    family_id: "kiro_specs"
+    path_family:
+      - ".kiro/specs/<spec-name>/design.md"
+      - ".kiro/specs/<spec-name>/requirements.md"
+      - ".kiro/specs/<spec-name>/tasks.md"
+    use_when:
+      - "上游架构文稿已经足够支撑 Spec 生成。"
+      - "当前目标明确属于 Kiro IDE Spec。"
+      - "需要推进 design.md、requirements.md 或 tasks.md。"
+    direction:
+      - "按 design.md → requirements.md → tasks.md 顺序推进。"
+      - "每个 Spec 聚焦一个清晰工程域。"
+      - "tasks.md 应承接 design.md 与 requirements.md。"
+
+  selection_boundary:
+    - "本文件定义当前阶段方向，不决定某一轮的具体 target_file。"
+    - "具体 target_file 选择由对应角色的 target_file 选择策略承接。"
+    - "所有 target_file 表达应使用 Repository-Path-Map.yaml 定义的 POSIX repo-relative path。"
 
 spec_output_definition:
   definition_source:
@@ -134,7 +191,7 @@ spec_coordination_policy:
     - "跨模块能力应保持职责分离，不能因为拆成多个 Specs 而产生边界冲突。"
     - "后续相关 Specs 应与低风险底层框架 Spec 的基础结构假设保持一致。"
 
-  must_not:
+  avoid:
     - "把每个 Spec 写成彼此无关的孤立点。"
     - "在不同 Specs 中重复定义互相冲突的目录结构、模块边界或访问规则。"
     - "让后续 Spec 覆盖或推翻前置 Spec 的基础假设，除非任务明确要求修订。"
@@ -167,7 +224,7 @@ low_risk_foundation_framework_spec:
       - "为其他 Specs 提供结构参考。"
       - "避免把基础框架 Spec 扩展成完整业务实现。"
 
-    must_not:
+    avoid:
       - "扩展成完整业务系统实现。"
       - "提前实现复杂权限系统。"
       - "提前实现支付能力。"
@@ -195,7 +252,6 @@ spec_partition_policy:
     - "输入背景明确。"
     - "与相关 Specs 的关系明确。"
     - "tasks.md 保持 Kiro 原生任务结构，但任务意图与范围应来自清晰的 design.md 和 requirements.md。"
-    
 
   anti_patterns:
     - "把多个核心区域混成一个大 Spec。"
@@ -214,7 +270,7 @@ future_traceability_policy:
     - "tasks.md 中自然出现的阶段、任务编号、子任务和 Requirements 回指，可作为后续切分参考。"
     - "后续审查、施工、PR 规划应基于 Specs 内容和真实代码状态综合判断。"
 
-  must_not:
+  avoid:
     - "为了后续 PR 切分强行改变 Kiro Specs 原生 tasks.md 任务块格式。"
     - "把 tasks.md 的每个任务机械等同于一个 PR。"
     - "让后续审查或 PR 规划需求反向破坏当前 Spec 的原生结构。"
@@ -255,19 +311,20 @@ suggested_spec_generation_direction:
         - "deployment baseline Spec"
 
 anti_stall_policy:
-  summary: "当前阶段应以 Specs 产出为导向。只要已有信息足够，就应推进具体 Spec 的 design.md / requirements.md / tasks.md ，而不是长期停留在背景复述、原则讨论或抽象准备中。允许在必要时补充边界说明，但补充说明必须服务于某个具体 Spec 的完成。"
+  summary: "当前阶段应以 Specs 产出为导向。只要已有信息足够，就应推进具体 Spec 的 design.md / requirements.md / tasks.md，而不是长期停留在背景复述、原则讨论或抽象准备中。允许在必要时补充边界说明，但补充说明必须服务于某个具体 Spec 的完成。"
 
   must:
-    - "每轮推进应尽量指向一个具体 Spec。"
+    - "每轮推进应尽量指向一个具体 Spec 或支撑具体 Spec 的上游 docs 文稿。"
     - "信息足够时，应直接推进 design.md / requirements.md / tasks.md 的生成或补全。"
     - "补充背景说明必须服务于具体 Spec 的完成。"
     - "优先形成可审查、可继续施工的 Spec 产物。"
 
-  must_not:
-    - "不得长期停留在抽象原则讨论。"
-    - "不得反复重述已有项目背景而不推进 Spec。"
-    - "不得为了追求完美完整性而拖延 Specs 产出。"
-    - "不得把本可拆分的 Specs 压成一个大杂烩。"
+  avoid:
+    - "长期停留在抽象原则讨论。"
+    - "反复重述已有项目背景而不推进 Spec。"
+    - "为了追求完美完整性而拖延 Specs 产出。"
+    - "把本可拆分的 Specs 压成一个大杂烩。"
+    - "持续补充与具体 Spec 无关的背景说明。"
 
 completion_criteria:
   summary: "当前阶段完成的标志不是“方向讨论清楚”，而是 Specs 产物完成。所有纳入当前范围的核心 Specs 都应推进到 tasks.md 层，并且这些 Specs 之间在基础框架、模块边界、职责划分和主要设计假设上不存在明显冲突。"
@@ -291,4 +348,4 @@ completion_criteria:
     - "单个 Spec 承载过多工程域，难以后续审查或 PR 规划。"
     - "design.md、requirements.md、tasks.md 三者表达目标不一致。"
     - "为了自定义后续切分方式而破坏 Kiro tasks.md 的原生任务块结构。"
-    - "持续反复补充背景说明，但没有实际推进具体 Spec。"
+    - "持续反复补充背景说明，但没有实际推进具体 Spec 或支撑具体 Spec 的 docs 文稿。"
