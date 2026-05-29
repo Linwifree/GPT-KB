@@ -8,18 +8,19 @@ system_facts:
 
   scope_boundary:
     owns:
-      - "commitLeaderArtifacts requestBody 的顶层字段集合。"
-      - "task_packet_md 的字段值形态。"
-      - "review_intent_pack_md 的字段值形态。"
-      - "leader_work_summary_json 的字段值形态。"
+      - "commitLeaderArtifacts requestBody 的整体 schema。"
+      - "requestBody 的三个顶层字段。"
+      - "task_packet_md 的 Gateway schema 字段形态。"
+      - "review_intent_pack_md 的 Gateway schema 字段形态。"
+      - "leader_work_summary_json 的 Gateway schema 字段形态。"
       - "三个产物之间的 canonical target_file / action 对齐关系。"
 
     out_of_scope:
       - "task_packet_md 的 Markdown 章节语义。"
       - "review_intent_pack_md 的 Markdown 章节语义。"
-      - "leader_work_summary_json 的详细 schema 字段解释。"
+      - "leader_work_summary_json 的字段语义细节。"
       - "提交前检查流程。"
-      - "mode 与 expected_action 的分支检查。"
+      - "target_file 选择策略。"
       - "项目背景、模块边界或 Spec 生产顺序。"
 
 source_contracts:
@@ -27,63 +28,112 @@ source_contracts:
   review_intent_template: "Review-Intent-Packet-Template.md"
   work_summary_template: "Leader-Work-Summary-Template.yaml"
 
-commit_payload:
-  type: "JSON object"
+commit_payload_schema:
+  name: "CommitLeaderArtifactsRequest"
+  type: "object"
+  additionalProperties: false
+
+  required:
+    - "task_packet_md"
+    - "review_intent_pack_md"
+    - "leader_work_summary_json"
+
+  properties:
+    task_packet_md:
+      type: "string"
+      minLength: 1
+      artifact_role: "KiroPrompt-GPT task packet Markdown body"
+      content_source: "KiroPrompt-GPT-Task-Packet-Template.md"
+
+    review_intent_pack_md:
+      type: "string"
+      minLength: 1
+      artifact_role: "Review-GPT review intent Markdown body"
+      content_source: "Review-Intent-Packet-Template.md"
+
+    leader_work_summary_json:
+      type: "object"
+      schema_ref: "LeaderWorkSummary"
+      schema_source: "Leader-Work-Summary-Template.yaml"
 
   exact_top_level_fields:
     - "task_packet_md"
     - "review_intent_pack_md"
     - "leader_work_summary_json"
 
-  fields:
-    task_packet_md:
-      type: "multiline Markdown string"
-      document_identity:
+field_value_shape:
+  task_packet_md:
+    gateway_schema:
+      type: "string"
+      minLength: 1
+      cleaned_value: "non_empty"
+    document_quality:
+      source: "KiroPrompt-GPT-Task-Packet-Template.md"
+      expected_identity:
         first_line: "# KiroPrompt-GPT Task Packet"
-      document_source: "KiroPrompt-GPT-Task-Packet-Template.md"
-      value_shape:
-        - "字段值是完整 Markdown 正文。"
-        - "字段值从 H1 标题开始。"
-        - "字段值保留真实换行。"
-        - "字段值可直接作为 task-packet.md 内容。"
+      expected_shape:
+        - "字段值是任务包 Markdown 正文。"
+        - "字段值保留可阅读的 Markdown 换行。"
         - "字段值中的 Target File 与 canonical target_file 一致。"
 
-    review_intent_pack_md:
-      type: "multiline Markdown string"
-      document_identity:
+  review_intent_pack_md:
+    gateway_schema:
+      type: "string"
+      minLength: 1
+      cleaned_value: "non_empty"
+    document_quality:
+      source: "Review-Intent-Packet-Template.md"
+      expected_identity:
         first_line: "# Review Intent Packet"
-      document_source: "Review-Intent-Packet-Template.md"
-      value_shape:
-        - "字段值是完整 Markdown 正文。"
-        - "字段值从 H1 标题开始。"
-        - "字段值保留真实换行。"
-        - "字段值可直接作为 review-intent-pack.md 内容。"
+      expected_shape:
+        - "字段值是审查意图 Markdown 正文。"
+        - "字段值保留可阅读的 Markdown 换行。"
         - "字段值中的 Review Target 与 canonical target_file 一致。"
 
-    leader_work_summary_json:
-      type: "JSON object"
+  leader_work_summary_json:
+    gateway_schema:
+      type: "object"
+      schema_ref: "LeaderWorkSummary"
       schema_source: "Leader-Work-Summary-Template.yaml"
-      source_of_truth_for:
-        - "target_file"
-        - "action"
-        - "file_change.type"
-        - "dependencies"
-        - "memory_note"
+    source_of_truth_for:
+      - "target_file"
+      - "action"
+      - "file_change.type"
+      - "dependencies"
+      - "memory_note"
 
-serialization_note:
-  request_transport:
-    - "requestBody 是 JSON object。"
-    - "两个 Markdown 字段在 JSON 传输中是 string。"
-    - "字段值解析后呈现为多行 Markdown 正文。"
+gateway_cleaning_expectation:
+  markdown_fields:
+    - "task_packet_md"
+    - "review_intent_pack_md"
 
-  markdown_value_expectation:
-    task_packet_md:
-      parsed_value_starts_with: "# KiroPrompt-GPT Task Packet"
-      saved_as: "task-packet.md"
+  accepted_after_cleaning:
+    - "字段存在。"
+    - "字段值是 string。"
+    - "清洗后字段值非空。"
 
-    review_intent_pack_md:
-      parsed_value_starts_with: "# Review Intent Packet"
-      saved_as: "review-intent-pack.md"
+  cleaning_notes:
+    - "换行可被统一。"
+    - "首尾空白可被清理。"
+    - "整体外层 Markdown 代码块可被清理。"
+    - "清理后仍以非空 string 进入后续保存。"
+
+leader_work_summary_schema_ref:
+  schema_name: "LeaderWorkSummary"
+  source_file: "Leader-Work-Summary-Template.yaml"
+  required:
+    - "schema_version"
+    - "action"
+    - "file_change"
+    - "main_goal"
+    - "behavior"
+    - "boundary"
+    - "dependencies"
+    - "memory_note"
+
+  strict_shape:
+    type: "object"
+    additionalProperties: false
 
 canonical_values:
   target_file:
@@ -108,48 +158,18 @@ action_pairing:
   MajorRevision:
     file_change_type: "major_revision"
 
-field_alignment:
+alignment_contract:
   required:
-    - "task_packet_md、review_intent_pack_md、leader_work_summary_json 表达同一轮任务。"
-    - "task_packet_md 中的 Target File 与 canonical target_file 一致。"
-    - "review_intent_pack_md 中的 Review Target 与 canonical target_file 一致。"
-    - "两个 Markdown 字段中的 Expected Action 与 canonical action 一致。"
-    - "leader_work_summary_json.file_change.type 与 canonical action 配对一致。"
-
-markdown_field_shape:
-  task_packet_md:
-    required:
-      - "字段值是 multiline Markdown string。"
-      - "字段值第一行是 # KiroPrompt-GPT Task Packet。"
-      - "字段值保留 H1、H2、列表项和段落的真实换行。"
-      - "字段值符合 KiroPrompt-GPT-Task-Packet-Template.md 的正文结构。"
-
-  review_intent_pack_md:
-    required:
-      - "字段值是 multiline Markdown string。"
-      - "字段值第一行是 # Review Intent Packet。"
-      - "字段值保留 H1、H2、列表项和段落的真实换行。"
-      - "字段值符合 Review-Intent-Packet-Template.md 的正文结构。"
-
-json_field_shape:
-  leader_work_summary_json:
-    required:
-      - "字段值是 JSON object。"
-      - "字段值符合 Leader-Work-Summary-Template.yaml。"
-      - "schema_version = 1.0。"
-      - "action 属于 Create 或 MajorRevision。"
-      - "file_change.target_file 是单一 string。"
-      - "file_change.type 与 action 配对一致。"
-
-valid_shape_summary:
-  - "requestBody 是 JSON object。"
-  - "requestBody 顶层字段集合为 task_packet_md、review_intent_pack_md、leader_work_summary_json。"
-  - "task_packet_md 是完整多行 Markdown string，第一行是 # KiroPrompt-GPT Task Packet。"
-  - "review_intent_pack_md 是完整多行 Markdown string，第一行是 # Review Intent Packet。"
-  - "leader_work_summary_json 是 JSON object，并符合 Leader-Work-Summary-Template.yaml。"
-  - "canonical target_file 来自 leader_work_summary_json.file_change.target_file。"
-  - "canonical action 来自 leader_work_summary_json.action。"
-  - "canonical file_change.type 来自 leader_work_summary_json.file_change.type。"
+    - "requestBody 使用 commit_payload_schema。"
+    - "requestBody 顶层字段集合等于 exact_top_level_fields。"
+    - "task_packet_md 是非空 string。"
+    - "review_intent_pack_md 是非空 string。"
+    - "leader_work_summary_json 是 object。"
+    - "leader_work_summary_json 符合 Leader-Work-Summary-Template.yaml。"
+    - "canonical target_file 来自 leader_work_summary_json.file_change.target_file。"
+    - "task_packet_md.Target File 与 canonical target_file 一致。"
+    - "review_intent_pack_md.Review Target 与 canonical target_file 一致。"
+    - "leader_work_summary_json.file_change.type 与 leader_work_summary_json.action 配对一致。"
 
 valid_payload_shape:
   request_body:
@@ -175,7 +195,7 @@ valid_payload_shape:
       action: "Create"
       file_change:
         type: "new_file"
-        target_file: ".kiro/specs/example/design.md"
+        target_file: "docs/example.md"
       main_goal: "生成本轮目标文件的任务规划。"
       behavior:
         task_type: "spec_generation"
@@ -183,15 +203,19 @@ valid_payload_shape:
       boundary:
         in_scope:
           - "生成本轮目标文件相关任务包与审查意图。"
+          - "保持本轮唯一 target_file 边界。"
         out_of_scope:
-          - "本轮目标文件之外的扩展工作。"
+          - "本轮 target_file 之外的扩展工作。"
+          - "实现代码。"
       dependencies:
         modules:
           - "example"
         files:
           - "current-specs-completion-direction.yaml"
           - "kiro-specs-definition.yaml"
+          - "KB-source-distillation.yaml"
+          - "KB-module-knowledge-graph.yaml"
       memory_note:
-        summary: "本轮推进 example/design.md。"
+        summary: "本轮选择 docs/example.md 作为目标文件。"
         carry_forward:
-          - "后续继续保持 design.md → requirements.md → tasks.md 的 Spec 顺序。"
+          - "后续继续保持单一 target_file。"

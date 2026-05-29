@@ -8,14 +8,14 @@ system_facts:
 
   role_scope:
     owns:
-      - "读取提交体格式规范作为合法字段形态来源。"
+      - "读取提交体格式规范作为 requestBody schema 来源。"
       - "确认本轮已获得 Gateway context。"
-      - "确认 requestBody 顶层字段集合正确。"
-      - "确认 task_packet_md 符合任务包正文模板。"
-      - "确认 review_intent_pack_md 符合审查意图正文模板。"
-      - "确认 leader_work_summary_json 符合摘要模板。"
+      - "确认 requestBody 符合 CommitLeaderArtifactsRequest。"
+      - "确认 task_packet_md 满足 Gateway 对 Markdown 字段的最低检测。"
+      - "确认 review_intent_pack_md 满足 Gateway 对 Markdown 字段的最低检测。"
+      - "确认 leader_work_summary_json 符合 LeaderWorkSummary。"
+      - "确认 action 与 expected_action 一致。"
       - "确认三个产物围绕同一个 canonical target_file。"
-      - "确认 mode、expected_action、action、file_change.type 配对一致。"
 
     out_of_scope:
       - "选择本轮 target_file。"
@@ -24,7 +24,6 @@ system_facts:
       - "生成 leader_work_summary_json 字段内容。"
       - "定义提交体字段形态。"
       - "定义 Markdown 正文的章节语义。"
-      - "定义其他角色的系统规则。"
 
 source_contracts:
   gateway_contract: "Leader-GPT-Actions-Gateway-Contract.md"
@@ -51,10 +50,14 @@ commit_gate_contract:
     - "Create"
     - "MajorRevision"
 
-  request_body:
-    shape_source: "Leader-GPT-Commit-Payload-Format.yaml.commit_payload"
-    exact_top_level_fields_source: "Leader-GPT-Commit-Payload-Format.yaml.commit_payload.exact_top_level_fields"
-    field_shape_source: "Leader-GPT-Commit-Payload-Format.yaml.commit_payload.fields"
+  request_body_schema:
+    source: "Leader-GPT-Commit-Payload-Format.yaml.commit_payload_schema"
+    type: "object"
+    additionalProperties: false
+    required:
+      - "task_packet_md"
+      - "review_intent_pack_md"
+      - "leader_work_summary_json"
 
   canonical_values:
     source: "Leader-GPT-Commit-Payload-Format.yaml.canonical_values"
@@ -76,110 +79,82 @@ commit_gate_contract:
       file_change_type: "major_revision"
 
 check_groups:
-  context_acquisition_check:
+  context_alignment_check:
     required:
       - "getLeaderContext 返回值已获得。"
       - "mode 来自 getLeaderContext.mode。"
       - "input_type 来自 getLeaderContext.input_type。"
       - "expected_action 来自 getLeaderContext.expected_action。"
-      - "context.current_state 已读取。"
-      - "context.current_input_md 已读取。"
-      - "context.optional_context 已读取。"
 
     pass_when:
       - "required_context_fields 全部可用。"
       - "mode 属于 mode_values。"
       - "expected_action 属于 expected_action_values。"
 
-    fail_when:
-      - "required_context_fields 缺项。"
-      - "mode 值异常。"
-      - "expected_action 值异常。"
+    repair_when:
+      - "Gateway context 缺项。"
+      - "mode 值未进入 mode_values。"
+      - "expected_action 值未进入 expected_action_values。"
 
-  request_body_shape_check:
+  commit_payload_schema_check:
     required:
-      - "requestBody 符合 commit_payload_format.commit_payload。"
-      - "requestBody 顶层字段集合符合 commit_payload_format.commit_payload.exact_top_level_fields。"
-      - "task_packet_md 字段符合 commit_payload_format.commit_payload.fields.task_packet_md。"
-      - "review_intent_pack_md 字段符合 commit_payload_format.commit_payload.fields.review_intent_pack_md。"
-      - "leader_work_summary_json 字段符合 commit_payload_format.commit_payload.fields.leader_work_summary_json。"
+      - "requestBody 是 object。"
+      - "requestBody 顶层字段集合等于 commit_payload_format.commit_payload_schema.required。"
+      - "requestBody 符合 additionalProperties=false。"
+      - "task_packet_md 字段存在。"
+      - "review_intent_pack_md 字段存在。"
+      - "leader_work_summary_json 字段存在。"
 
     pass_when:
-      - "requestBody 字段形态与 commit_payload_format 一致。"
+      - "requestBody 符合 CommitLeaderArtifactsRequest。"
+      - "requestBody 只包含 task_packet_md、review_intent_pack_md、leader_work_summary_json。"
 
-    fail_when:
-      - "requestBody 类型异常。"
-      - "requestBody 顶层字段集合异常。"
-      - "task_packet_md 字段形态异常。"
-      - "review_intent_pack_md 字段形态异常。"
-      - "leader_work_summary_json 字段形态异常。"
+    repair_when:
+      - "requestBody 不是 object。"
+      - "requestBody 顶层字段集合与 CommitLeaderArtifactsRequest 不一致。"
 
-  task_packet_md_check:
+  markdown_gateway_schema_check:
     required:
-      - "task_packet_md 符合 commit_payload_format.markdown_field_shape.task_packet_md。"
+      - "task_packet_md 是 string。"
+      - "task_packet_md 清洗后非空。"
+      - "review_intent_pack_md 是 string。"
+      - "review_intent_pack_md 清洗后非空。"
+
+    pass_when:
+      - "task_packet_md 满足 commit_payload_format.field_value_shape.task_packet_md.gateway_schema。"
+      - "review_intent_pack_md 满足 commit_payload_format.field_value_shape.review_intent_pack_md.gateway_schema。"
+
+    repair_when:
+      - "task_packet_md 字段值无法作为非空 string。"
+      - "review_intent_pack_md 字段值无法作为非空 string。"
+
+  markdown_template_quality_check:
+    required:
       - "task_packet_md 使用 KiroPrompt-GPT-Task-Packet-Template.md 定义的正文结构。"
-      - "task_packet_md 第一行符合 commit_payload_format 中的 document_identity。"
-      - "task_packet_md 包含唯一 Target File。"
-      - "task_packet_md 的 Target File 与 canonical target_file 一致。"
-      - "task_packet_md 的 Expected Action 与 canonical action 一致。"
-      - "task_packet_md 的 Reading Scope 文件使用 R? + D? 标注。"
-      - "task_packet_md 正文聚焦给 KiroPrompt-GPT 的任务包。"
-
-    pass_when:
-      - "task_packet_md 字段形态与 commit_payload_format 一致。"
-      - "task_packet_md 正文结构与 task_packet_template 一致。"
-      - "task_packet_md Target File 与 canonical target_file 一致。"
-      - "task_packet_md Expected Action 与 canonical action 一致。"
-
-    fail_when:
-      - "task_packet_md 字段形态异常。"
-      - "task_packet_md 正文结构异常。"
-      - "task_packet_md Target File 缺项。"
-      - "task_packet_md Target File 数量异常。"
-      - "task_packet_md Target File 与 canonical target_file 不一致。"
-      - "task_packet_md Expected Action 与 canonical action 不一致。"
-      - "task_packet_md Reading Scope 标注缺项。"
-      - "task_packet_md 正文职责偏移。"
-
-  review_intent_pack_md_check:
-    required:
-      - "review_intent_pack_md 符合 commit_payload_format.markdown_field_shape.review_intent_pack_md。"
       - "review_intent_pack_md 使用 Review-Intent-Packet-Template.md 定义的正文结构。"
-      - "review_intent_pack_md 第一行符合 commit_payload_format 中的 document_identity。"
-      - "review_intent_pack_md 包含唯一 Review Target。"
+      - "task_packet_md 的 Target File 与 canonical target_file 一致。"
       - "review_intent_pack_md 的 Review Target 与 canonical target_file 一致。"
-      - "review_intent_pack_md 的 Expected Action 与 canonical action 一致。"
-      - "review_intent_pack_md 的 Optional Reading Scope 如列文件，则使用 R? + D? 标注。"
-      - "review_intent_pack_md 正文聚焦给 Review-GPT 的审查意图。"
+      - "两个 Markdown 正文中的 Expected Action 与 canonical action 一致。"
 
     pass_when:
-      - "review_intent_pack_md 字段形态与 commit_payload_format 一致。"
-      - "review_intent_pack_md 正文结构与 review_intent_template 一致。"
-      - "review_intent_pack_md Review Target 与 canonical target_file 一致。"
-      - "review_intent_pack_md Expected Action 与 canonical action 一致。"
+      - "两个 Markdown 字段满足 Gateway 最低检测。"
+      - "两个 Markdown 字段同时满足各自模板质量要求。"
 
-    fail_when:
-      - "review_intent_pack_md 字段形态异常。"
-      - "review_intent_pack_md 正文结构异常。"
-      - "review_intent_pack_md Review Target 缺项。"
-      - "review_intent_pack_md Review Target 数量异常。"
-      - "review_intent_pack_md Review Target 与 canonical target_file 不一致。"
-      - "review_intent_pack_md Expected Action 与 canonical action 不一致。"
-      - "review_intent_pack_md Optional Reading Scope 标注缺项。"
-      - "review_intent_pack_md 正文职责偏移。"
+    repair_when:
+      - "Markdown 字段通过 Gateway schema，但模板质量未对齐。"
+      - "Markdown 正文中的目标路径或 Expected Action 与 canonical values 不一致。"
 
-  leader_work_summary_json_check:
+  leader_work_summary_schema_check:
     required:
-      - "leader_work_summary_json 符合 commit_payload_format.json_field_shape.leader_work_summary_json。"
+      - "leader_work_summary_json 是 object。"
       - "leader_work_summary_json 符合 Leader-Work-Summary-Template.yaml。"
       - "leader_work_summary_json.schema_version = 1.0。"
       - "leader_work_summary_json.action 属于 expected_action_values。"
-      - "leader_work_summary_json.action 等于 expected_action。"
-      - "leader_work_summary_json.file_change.type 与 action 配对。"
-      - "leader_work_summary_json.file_change.target_file 是单一 string。"
+      - "leader_work_summary_json.file_change.type 属于 new_file 或 major_revision。"
+      - "leader_work_summary_json.file_change.target_file 是 string。"
       - "leader_work_summary_json.main_goal 非空。"
-      - "leader_work_summary_json.behavior.task_type 非空。"
-      - "leader_work_summary_json.behavior.operation 非空。"
+      - "leader_work_summary_json.behavior.task_type 存在。"
+      - "leader_work_summary_json.behavior.operation 存在。"
       - "leader_work_summary_json.boundary.in_scope 是 string[]。"
       - "leader_work_summary_json.boundary.out_of_scope 是 string[]。"
       - "leader_work_summary_json.dependencies.modules 是 string[]。"
@@ -188,34 +163,33 @@ check_groups:
       - "leader_work_summary_json.memory_note.carry_forward 是 string[]。"
 
     pass_when:
-      - "leader_work_summary_json 字段形态与 commit_payload_format 一致。"
-      - "leader_work_summary_json 字段结构与 work_summary_template 一致。"
-      - "leader_work_summary_json.action 与 expected_action 一致。"
-      - "leader_work_summary_json.file_change.type 与 action 配对正确。"
-      - "leader_work_summary_json.file_change.target_file 可作为 canonical target_file。"
+      - "leader_work_summary_json 满足 LeaderWorkSummary strict schema。"
+      - "leader_work_summary_json 字段集合与 Leader-Work-Summary-Template.yaml 对齐。"
 
-    fail_when:
-      - "leader_work_summary_json 字段形态异常。"
+    repair_when:
+      - "leader_work_summary_json 字段值不是 object。"
       - "leader_work_summary_json required 字段缺项。"
-      - "leader_work_summary_json 字段结构异常。"
-      - "leader_work_summary_json.action 与 expected_action 不一致。"
-      - "leader_work_summary_json.file_change.type 与 action 配对异常。"
-      - "leader_work_summary_json.file_change.target_file 类型异常。"
+      - "leader_work_summary_json 字段集合超出 LeaderWorkSummary schema。"
+      - "leader_work_summary_json 字段类型与 LeaderWorkSummary schema 不一致。"
 
-  mode_action_alignment_check:
+  runtime_action_alignment_check:
     required:
+      - "leader_work_summary_json.action 等于 expected_action。"
       - "mode 与 expected_action 符合 mode_action_pairs。"
       - "canonical file_change_type 与 mode_action_pairs 当前分支一致。"
+      - "canonical file_change_type 与 canonical action 配对一致。"
 
     pass_when:
-      - "mode、expected_action、canonical file_change_type 三者配对一致。"
+      - "mode、expected_action、canonical action、canonical file_change_type 配对一致。"
 
-    fail_when:
-      - "mode 与 expected_action 配对异常。"
-      - "expected_action 与 canonical file_change_type 配对异常。"
+    repair_when:
+      - "leader_work_summary_json.action 与 expected_action 不一致。"
+      - "mode 与 expected_action 不匹配。"
+      - "canonical file_change_type 与 canonical action 不匹配。"
 
   cross_artifact_alignment_check:
     required:
+      - "canonical target_file 来自 leader_work_summary_json.file_change.target_file。"
       - "task_packet_md 的 Target File 与 canonical target_file 一致。"
       - "review_intent_pack_md 的 Review Target 与 canonical target_file 一致。"
       - "task_packet_md 的 Expected Action 与 canonical action 一致。"
@@ -227,77 +201,37 @@ check_groups:
       - "两个 Markdown 正文中的 Expected Action 与 canonical action 一致。"
       - "三个产物语义属于同一 target_file。"
 
-    fail_when:
-      - "Target File 与 canonical target_file 不一致。"
-      - "Review Target 与 canonical target_file 不一致。"
-      - "Expected Action 与 canonical action 不一致。"
+    repair_when:
+      - "Target File / Review Target / canonical target_file 未对齐。"
+      - "Markdown 正文中的 Expected Action 与 canonical action 未对齐。"
       - "三个产物语义分叉。"
-
-  artifact_role_check:
-    required:
-      - "task_packet_md 承载 KiroPrompt-GPT 任务包正文。"
-      - "review_intent_pack_md 承载 Review-GPT 审查意图正文。"
-      - "leader_work_summary_json 承载机器可读摘要。"
-
-    pass_when:
-      - "三个产物职责清晰。"
-      - "Markdown 正文与各自模板职责一致。"
-      - "机器可读字段位于 leader_work_summary_json。"
-
-    fail_when:
-      - "task_packet_md 职责偏移。"
-      - "review_intent_pack_md 职责偏移。"
-      - "leader_work_summary_json 职责偏移。"
-      - "机器可读主事实分散到多个产物中。"
-
-pass_when:
-  - "getLeaderContext 返回的 required_context_fields 全部可用。"
-  - "requestBody 符合 Leader-GPT-Commit-Payload-Format.yaml。"
-  - "task_packet_md 符合提交体格式规范和任务包模板。"
-  - "review_intent_pack_md 符合提交体格式规范和审查意图模板。"
-  - "leader_work_summary_json 符合提交体格式规范和摘要模板。"
-  - "leader_work_summary_json.action 等于 expected_action。"
-  - "canonical file_change_type 与 canonical action 配对正确。"
-  - "canonical target_file 是单一目标文件路径。"
-  - "task_packet_md 的 Target File 与 canonical target_file 一致。"
-  - "review_intent_pack_md 的 Review Target 与 canonical target_file 一致。"
-  - "三个产物职责清晰且属于同一轮任务。"
-
-fail_when:
-  - "context 缺项。"
-  - "requestBody 形态异常。"
-  - "task_packet_md 形态或正文结构异常。"
-  - "review_intent_pack_md 形态或正文结构异常。"
-  - "leader_work_summary_json 形态或字段结构异常。"
-  - "mode、expected_action、canonical file_change_type 配对异常。"
-  - "Target File / Review Target / canonical target_file 对齐异常。"
-  - "产物职责偏移。"
-
-stop_when_failed:
-  - "停止提交。"
-  - "定位失败 check_group。"
-  - "修正对应产物或 requestBody。"
-  - "重新执行 Actions Commit Gate。"
 
 commit_permission:
   allow_commit_when:
-    - "pass_when 全部满足。"
-    - "fail_when 全部未触发。"
+    - "context_alignment_check pass。"
+    - "commit_payload_schema_check pass。"
+    - "markdown_gateway_schema_check pass。"
+    - "leader_work_summary_schema_check pass。"
+    - "runtime_action_alignment_check pass。"
+    - "cross_artifact_alignment_check pass。"
 
-  block_commit_when:
-    - "任一 fail_when 被触发。"
-    - "无法确认 canonical target_file。"
-    - "无法确认 expected_action 与 canonical action 一致。"
-    - "无法确认三个产物属于同一轮任务。"
+  quality_confirm_before_commit:
+    - "markdown_template_quality_check pass。"
+
+  stop_when:
+    - "任一 required schema check 未通过。"
+    - "expected_action 与 leader_work_summary_json.action 未对齐。"
+    - "canonical target_file 无法确认。"
+    - "三个产物目标文件未对齐。"
 
 after_commit_response_policy:
   if_gateway_accepted_true:
     chat_response:
       - "返回极简成功回执。"
-      - "可简要说明本轮三个产物已提交。"
+      - "简要说明三个产物已提交。"
 
   if_gateway_accepted_false:
     chat_response:
       - "报告 Gateway 返回的 error。"
       - "报告 Gateway 返回的 message。"
-      - "根据错误所属字段修正后重新执行 commit gate。"
+      - "根据错误所属字段修正后重新执行 Actions Commit Gate。"
